@@ -85,12 +85,17 @@ fn DecimalNat::times_two(self : DecimalNat) -> DecimalNat {
 fn DecimalNat::times_power_of_two(
   self : DecimalNat,
   exponent : Int,
-) -> DecimalNat {
+  work : WorkCounter,
+) -> Result[DecimalNat, BddError] {
   let mut value = self
   for i = 0; i < exponent; i = i + 1 {
+    match work.step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
     value = value.times_two()
   }
-  value
+  Ok(value)
 }
 
 ///|
@@ -106,6 +111,12 @@ fn DecimalNat::to_decimal(self : DecimalNat) -> String {
     builder.write_string(text)
   }
   builder.to_string()
+}
+
+///|
+fn DecimalNat::decimal_length(self : DecimalNat) -> Int {
+  let last = self.digits.length() - 1
+  self.digits[last].to_string().length() + last * 9
 }
 
 ///|
@@ -143,8 +154,9 @@ fn Manager::count_root(
     return Ok(DecimalNat::zero())
   }
   if root == 1 {
-    return Ok(
-      DecimalNat::one().times_power_of_two(self.variables.length() - level),
+    return DecimalNat::one().times_power_of_two(
+      self.variables.length() - level,
+      work,
     )
   }
   let key : CountKey = { root, level }
@@ -163,7 +175,11 @@ fn Manager::count_root(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let value = low.add(high).times_power_of_two(node.variable - level)
+  let value = match
+    low.add(high).times_power_of_two(node.variable - level, work) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   memo.set(key, value)
   Ok(value)
 }
@@ -203,7 +219,12 @@ pub fn Manager::sat_count_decimal(
   value : Bdd,
 ) -> Result[String, BddError] {
   match self.exact_count(value) {
-    Ok(count) => Ok(count.to_decimal())
+    Ok(count) =>
+      if count.decimal_length() > self.budget.max_output_bytes {
+        Err(OutputBudgetExceeded(self.budget.max_output_bytes))
+      } else {
+        Ok(count.to_decimal())
+      }
     Err(error) => Err(error)
   }
 }

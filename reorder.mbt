@@ -108,13 +108,15 @@ pub fn Manager::reorder(
     Err(error) => return Err(error)
   }
   let root : Bdd = { owner: target, root: translated }
-  Ok({
-    manager: target,
-    root,
-    before_nodes: self.reachable_node_count(value),
-    after_nodes: target.reachable_node_count(root),
-    attempted_orders: 1,
-  })
+  let before_nodes = match self.reachable_node_count(value) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let after_nodes = match target.reachable_node_count(root) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok({ manager: target, root, before_nodes, after_nodes, attempted_orders: 1 })
 }
 
 ///|
@@ -128,7 +130,10 @@ pub fn Manager::optimize_order(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let original_nodes = self.reachable_node_count(value)
+  let original_nodes = match self.reachable_node_count(value) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   let mut current_manager = self
   let mut current_root = value
   let mut current_nodes = original_nodes

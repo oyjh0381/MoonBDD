@@ -15,7 +15,7 @@ test "manager creates stable terminals and variables" {
   assert_true(manager.is_false(false_bdd))
   assert_true(manager.is_true(true_bdd))
   assert_false(manager.is_terminal(a))
-  assert_eq(manager.reachable_node_count(a), 1)
+  assert_eq(manager.reachable_node_count(a), Ok(1))
 }
 
 ///|
@@ -23,6 +23,12 @@ test "manager rejects duplicate variables and foreign handles" {
   let budget = @moonbdd.ResourceBudget::default()
   assert_true(
     @moonbdd.Manager::new(["a", "a"], budget) is Err(DuplicateVariable("a")),
+  )
+  assert_true(
+    @moonbdd.Manager::new(["a b"], budget) is Err(InvalidVariableName("a b")),
+  )
+  assert_true(
+    @moonbdd.Manager::new(["true"], budget) is Err(InvalidVariableName("true")),
   )
   let first = match @moonbdd.Manager::new(["a"], budget) {
     Ok(manager) => manager
@@ -258,7 +264,7 @@ test "reordering is non-destructive and preserves Boolean meaning" {
   let budget = @moonbdd.ResourceBudget::default()
   let manager = @moonbdd.Manager::new(["a", "c", "b", "d"], budget).unwrap()
   let formula = manager.compile("(a & b) | (c & d)").unwrap()
-  let before = manager.reachable_node_count(formula)
+  let before = manager.reachable_node_count(formula).unwrap()
   let reordered = manager.reorder(formula, ["a", "b", "c", "d"]).unwrap()
   assert_eq(reordered.before_nodes, before)
   assert_true(reordered.after_nodes <= reordered.manager.retained_node_count())
@@ -348,6 +354,44 @@ test "state encoding validates disjoint complete variable pairs" {
 }
 
 ///|
+test "reachability covers empty singleton and iteration budget boundaries" {
+  let manager = @moonbdd.Manager::new(
+    ["x", "x_next"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let encoding = manager.state_encoding(["x"], ["x_next"]).unwrap()
+  let empty = manager
+    .reach(manager.false_bdd(), manager.true_bdd(), encoding, None)
+    .unwrap()
+  assert_true(empty.fixed_point)
+  assert_true(manager.is_false(empty.reachable))
+  let singleton = manager
+    .reach(
+      manager.compile("!x").unwrap(),
+      manager.compile("x <-> x_next").unwrap(),
+      encoding,
+      None,
+    )
+    .unwrap()
+  assert_true(singleton.fixed_point)
+  assert_eq(manager.sat_count_u64(singleton.reachable), Ok(2UL))
+  let limited = @moonbdd.Manager::new(["x", "x_next"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_iterations: 1,
+  }).unwrap()
+  let limited_encoding = limited.state_encoding(["x"], ["x_next"]).unwrap()
+  assert_true(
+    limited.reach(
+      limited.compile("!x").unwrap(),
+      limited.true_bdd(),
+      limited_encoding,
+      None,
+    )
+    is Err(IterationBudgetExceeded(1)),
+  )
+}
+
+///|
 test "Resource Budgets reject work before unsafe growth" {
   let node_budget = { ..@moonbdd.ResourceBudget::default(), max_nodes: 2 }
   let node_manager = @moonbdd.Manager::new(["a"], node_budget).unwrap()
@@ -366,6 +410,22 @@ test "Resource Budgets reject work before unsafe growth" {
     model_manager.enumerate_models(model_manager.true_bdd(), 2)
     is Err(ModelBudgetExceeded(1)),
   )
+  let count_budget = { ..@moonbdd.ResourceBudget::default(), max_work: 4 }
+  let count_manager = @moonbdd.Manager::new(
+    ["a", "b", "c", "d", "e"],
+    count_budget,
+  ).unwrap()
+  assert_true(
+    count_manager.sat_count_decimal(count_manager.true_bdd())
+    is Err(WorkBudgetExceeded(4)),
+  )
+  assert_true(
+    @moonbdd.Manager::new(["a"], {
+      ..@moonbdd.ResourceBudget::default(),
+      max_cache_entries: 0,
+    })
+    is Err(InvalidBudget("max_cache_entries", 0)),
+  )
 }
 
 ///|
@@ -375,4 +435,12 @@ test "failed bounded operations preserve existing BDD Handles" {
   let a = manager.variable("a").unwrap()
   assert_true(manager.encode_json(a) is Err(OutputBudgetExceeded(16)))
   assert_eq(manager.evaluate(a, [("a", true)]), Ok(true))
+  let count_manager = @moonbdd.Manager::new(["a", "b", "c", "d", "e"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_output_bytes: 1,
+  }).unwrap()
+  assert_true(
+    count_manager.sat_count_decimal(count_manager.true_bdd())
+    is Err(OutputBudgetExceeded(1)),
+  )
 }

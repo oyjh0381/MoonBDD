@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -41,6 +42,13 @@ def main() -> int:
     require(count.returncode == 0, count.stderr)
     require(count.stdout == "3\n", count.stdout)
 
+    with tempfile.TemporaryDirectory() as directory:
+        expression_file = Path(directory) / "constraint.bdd"
+        expression_file.write_text("a <-> b", encoding="utf-8")
+        file_count = run("count", "a,b", f"@{expression_file}")
+        require(file_count.returncode == 0, file_count.stderr)
+        require(file_count.stdout == "2\n", file_count.stdout)
+
     witness = run("sat-one", "a,b", "a ^ b")
     require(witness.returncode == 0, witness.stderr)
     values = json.loads(witness.stdout)
@@ -51,9 +59,25 @@ def main() -> int:
     require(json.loads(reach.stdout)["invariant_holds"] is True, reach.stdout)
 
     malformed = run("count", "a", "a & )")
-    require(malformed.returncode != 0, "malformed input unexpectedly succeeded")
-    require(malformed.stderr.startswith("MOONBDD_ERROR:"), malformed.stderr)
-    print("CLI contract: 6 scenarios passed")
+    require(malformed.returncode == 3, malformed.stderr)
+    malformed_error = json.loads(malformed.stderr.removeprefix("MOONBDD_ERROR "))
+    require(malformed_error["code"] == "parse", malformed.stderr)
+
+    invalid = run("count", "true", "true")
+    require(invalid.returncode == 4, invalid.stderr)
+    invalid_error = json.loads(invalid.stderr.removeprefix("MOONBDD_ERROR "))
+    require(invalid_error["code"] == "invalid_input", invalid.stderr)
+
+    missing = run("count", "a", "@definitely-missing-expression.bdd")
+    require(missing.returncode == 8, missing.stderr)
+    missing_error = json.loads(missing.stderr.removeprefix("MOONBDD_ERROR "))
+    require(missing_error["code"] == "io", missing.stderr)
+
+    usage = run("unknown")
+    require(usage.returncode == 2, usage.stderr)
+    usage_error = json.loads(usage.stderr.removeprefix("MOONBDD_ERROR "))
+    require(usage_error["code"] == "usage", usage.stderr)
+    print("CLI contract: 10 scenarios passed")
     return 0
 
 

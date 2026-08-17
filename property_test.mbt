@@ -82,6 +82,18 @@ test "parser precedence matrix has independently worked expectations" {
 }
 
 ///|
+test "parser mutation corpus rejects truncated and substituted tokens" {
+  let manager = property_manager()
+  let mutations = [
+    "", "!", "(", ")", "a &", "| a", "a <->", "a -> -> b", "a && b", "a || b", "a @ b",
+    "a <=> b", "true false", "a (b)", "\u{2603}",
+  ]
+  for source in mutations {
+    assert_true(manager.compile(source) is Err(ParseFailure(_)))
+  }
+}
+
+///|
 test "Shannon expansion is canonical for every generated small formula" {
   let manager = property_manager()
   let atoms = [
@@ -208,6 +220,7 @@ test "public operations preserve source Handles after bounded failures" {
   let manager = @moonbdd.Manager::new(["a", "b"], tiny).unwrap()
   let a = manager.variable("a").unwrap()
   let b = manager.variable("b").unwrap()
+  assert_true(manager.reachable_node_count(a) is Err(WorkBudgetExceeded(2)))
   ignore(manager.and_bdd(a, b))
   assert_eq(manager.evaluate(a, [("a", true), ("b", false)]), Ok(true))
   assert_eq(manager.evaluate(b, [("a", false), ("b", true)]), Ok(true))

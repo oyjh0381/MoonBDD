@@ -2,6 +2,7 @@
 fn validate_budget(budget : ResourceBudget) -> Result[Unit, BddError] {
   let checks = [
     ("max_nodes", budget.max_nodes),
+    ("max_cache_entries", budget.max_cache_entries),
     ("max_work", budget.max_work),
     ("max_input_bytes", budget.max_input_bytes),
     ("max_depth", budget.max_depth),
@@ -36,6 +37,9 @@ pub fn Manager::new(
   for i, name in names {
     if name.length() == 0 {
       return Err(EmptyVariable)
+    }
+    if !valid_variable_name(name) {
+      return Err(InvalidVariableName(name))
     }
     if index.get(name) is Some(_) {
       return Err(DuplicateVariable(name))
@@ -105,11 +109,6 @@ pub fn Bdd::same(self : Bdd, other : Bdd) -> Bool {
 }
 
 ///|
-pub fn Bdd::root_id(self : Bdd) -> Int {
-  self.root
-}
-
-///|
 fn Manager::mk(
   self : Manager,
   variable : Int,
@@ -157,28 +156,31 @@ pub fn Manager::variable(
 }
 
 ///|
-fn Manager::reachable_visit(
+pub fn Manager::reachable_node_count(
   self : Manager,
-  root : Int,
-  seen : @hashmap.HashMap[Int, Unit],
-) -> Unit {
-  if root <= 1 || seen.get(root) is Some(_) {
-    return
-  }
-  seen.set(root, ())
-  let node = self.nodes[root]
-  self.reachable_visit(node.low, seen)
-  self.reachable_visit(node.high, seen)
-}
-
-///|
-pub fn Manager::reachable_node_count(self : Manager, value : Bdd) -> Int {
-  if !physical_equal(self, value.owner) {
-    return 0
+  value : Bdd,
+) -> Result[Int, BddError] {
+  match self.validate(value) {
+    Err(error) => return Err(error)
+    Ok(_) => ()
   }
   let seen : @hashmap.HashMap[Int, Unit] = @hashmap.HashMap([])
-  self.reachable_visit(value.root, seen)
-  seen.length()
+  let pending = [value.root]
+  let work = WorkCounter::new(self.budget.max_work)
+  while pending.length() > 0 {
+    match work.step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
+    let root = pending.pop().unwrap()
+    if root > 1 && seen.get(root) is None {
+      seen.set(root, ())
+      let node = self.nodes[root]
+      pending.push(node.low)
+      pending.push(node.high)
+    }
+  }
+  Ok(seen.length())
 }
 
 ///|

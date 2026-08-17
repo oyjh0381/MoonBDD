@@ -21,10 +21,14 @@ pub fn Manager::statistics(
     Ok(value) => value
     Err(error) => return Err(error)
   }
+  let reachable = match self.reachable_node_count(value) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   Ok({
     declared_variables: self.variables.length(),
     support_variables: support.length(),
-    reachable_nodes: self.reachable_node_count(value),
+    reachable_nodes: reachable,
     retained_nodes: self.retained_node_count(),
     model_count_decimal: count,
   })

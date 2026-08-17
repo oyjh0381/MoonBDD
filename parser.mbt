@@ -93,6 +93,25 @@ fn identifier_continue(byte : Byte) -> Bool {
 }
 
 ///|
+/// Public Manager names deliberately share the expression grammar so every
+/// canonical expression can be parsed by a Manager with the same variables.
+fn valid_variable_name(name : String) -> Bool {
+  if name == "true" || name == "false" {
+    return false
+  }
+  let data = @utf8.encode(name)
+  if data.length() == 0 || !identifier_start(data[0]) {
+    return false
+  }
+  for i = 1; i < data.length(); i = i + 1 {
+    if !identifier_continue(data[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 fn from_bdd_result(
   result : Result[Bdd, BddError],
 ) -> Result[Bdd, ExpressionError] {

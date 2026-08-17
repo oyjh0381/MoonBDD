@@ -16,7 +16,7 @@ fn usage() -> String {
     #|  moonbdd reach
     #|
     #|VARIABLES and NEW_ORDER are comma-separated names. Use '-' as EXPRESSION
-    #|to read UTF-8 text from stdin.
+    #|to read UTF-8 text from stdin, or '@PATH' to read an explicit file.
     #|
   )
 }
@@ -29,10 +29,10 @@ fn split_names(text : String) -> Result[Array[String], String] {
   for index = 0; index <= data.length(); index = index + 1 {
     if index == data.length() || data[index] == b',' {
       if index == start {
-        return Err("Variable list contains an empty name")
+        return Err("InvalidArgument: variable list contains an empty name")
       }
       let name = @utf8.decode(data[start:index]) catch {
-        _ => return Err("Variable list is not valid UTF-8")
+        _ => return Err("InvalidArgument: variable list is not valid UTF-8")
       }
       result.push(name)
       start = index + 1
@@ -42,12 +42,62 @@ fn split_names(text : String) -> Result[Array[String], String] {
 }
 
 ///|
-async fn expression_input(argument : String) -> String {
+async fn expression_input(argument : String) -> Result[String, String] {
   if argument == "-" {
-    @stdio.stdin.read_all().text()
+    Ok(@stdio.stdin.read_all().text()) catch {
+      _ => Err("IoFailure: unable to read expression from stdin")
+    }
+  } else if argument.has_prefix("@") {
+    let path = argument[1:].to_owned()
+    if path == "" {
+      Err("InvalidArgument: '@PATH' requires a non-empty path")
+    } else {
+      Ok(@fs.read_file(path).text()) catch {
+        _ => Err("IoFailure: unable to read expression file: " + path)
+      }
+    }
   } else {
-    argument
+    Ok(argument)
   }
+}
+
+///|
+fn classify_error(message : String) -> (String, Int) {
+  if message.has_prefix("Usage:") {
+    ("usage", 2)
+  } else if message.contains("ParseFailure") {
+    ("parse", 3)
+  } else if message.contains("InvalidArtifact") ||
+    message.contains("UnsupportedVersion") {
+    ("artifact", 5)
+  } else if message.contains("BudgetExceeded") ||
+    message.contains("IterationBudgetExceeded") {
+    ("resource_budget", 6)
+  } else if message.contains("ArithmeticOverflow") {
+    ("arithmetic", 7)
+  } else if message.has_prefix("IoFailure:") {
+    ("io", 8)
+  } else if message.contains("InvalidArgument") ||
+    message.contains("InvalidVariable") ||
+    message.contains("DuplicateVariable") ||
+    message.contains("UnknownVariable") ||
+    message.contains("EmptyVariable") ||
+    message.contains("ForeignHandle") {
+    ("invalid_input", 4)
+  } else {
+    ("internal", 70)
+  }
+}
+
+///|
+fn machine_error(message : String) -> (String, Int) {
+  let (code, exit_code) = classify_error(message)
+  let payload = "{\"code\":" +
+    Json::string(code).stringify() +
+    ",\"message\":" +
+    Json::string(message).stringify() +
+    "}"
+  ("MOONBDD_ERROR " + payload + "\n", exit_code)
 }
 
 ///|
@@ -87,7 +137,10 @@ async fn run_formula_command(
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
-  let expression = expression_input(expression_argument)
+  let expression = match expression_input(expression_argument) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   let value = match manager.compile(expression) {
     Ok(value) => value
     Err(error) => return Err(expression_error_text(error))
@@ -155,7 +208,11 @@ async fn run_reorder(
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
-  let value = match manager.compile(expression_input(expression_argument)) {
+  let expression = match expression_input(expression_argument) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let value = match manager.compile(expression) {
     Ok(value) => value
     Err(error) => return Err(expression_error_text(error))
   }
@@ -251,15 +308,16 @@ async fn main {
     let name = if args.length() == 5 { args[4] } else { "root" }
     run_formula_command(args[1], args[2], args[3], name)
   } else {
-    Err("invalid arguments\n" + usage())
+    Err("Usage: invalid arguments\n" + usage())
   }
   match result {
     Ok(output) => @stdio.stdout.write(output)
     Err(message) => {
-      @stdio.stderr.write("MOONBDD_ERROR: " + message + "\n") catch {
+      let (output, exit_code) = machine_error(message)
+      @stdio.stderr.write(output) catch {
         _ => ()
       }
-      process_exit(2)
+      process_exit(exit_code)
     }
   }
 }

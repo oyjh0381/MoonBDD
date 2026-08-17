@@ -16,12 +16,12 @@ pub struct Bdd {
   owner : Manager
   root : Int
 }
-pub fn Bdd::root_id(Self) -> Int
 pub fn Bdd::same(Self, Self) -> Bool
 
 pub(all) enum BddError {
   InvalidBudget(String, Int)
   EmptyVariable
+  InvalidVariableName(String)
   DuplicateVariable(String)
   UnknownVariable(String)
   ForeignHandle
@@ -81,7 +81,7 @@ pub fn Manager::not_bdd(Self, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::optimize_order(Self, Bdd) -> Result[ReorderResult, BddError]
 pub fn Manager::or_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::reach(Self, Bdd, Bdd, StateEncoding, Bdd?) -> Result[ReachabilityResult, BddError]
-pub fn Manager::reachable_node_count(Self, Bdd) -> Int
+pub fn Manager::reachable_node_count(Self, Bdd) -> Result[Int, BddError]
 pub fn Manager::reorder(Self, Bdd, Array[String]) -> Result[ReorderResult, BddError]
 pub fn Manager::restrict(Self, Bdd, Array[(String, Bool)]) -> Result[Bdd, BddError]
 pub fn Manager::retained_node_count(Self) -> Int
@@ -133,6 +133,7 @@ pub(all) struct ReorderResult {
 
 pub(all) struct ResourceBudget {
   max_nodes : Int
+  max_cache_entries : Int
   max_work : Int
   max_input_bytes : Int
   max_depth : Int

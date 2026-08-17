@@ -3,6 +3,7 @@
 /// exponentially. Every value must be positive.
 pub(all) struct ResourceBudget {
   max_nodes : Int
+  max_cache_entries : Int
   max_work : Int
   max_input_bytes : Int
   max_depth : Int
@@ -16,6 +17,7 @@ pub(all) struct ResourceBudget {
 pub fn ResourceBudget::default() -> ResourceBudget {
   {
     max_nodes: 100000,
+    max_cache_entries: 100000,
     max_work: 1000000,
     max_input_bytes: 1048576,
     max_depth: 1024,
@@ -32,6 +34,7 @@ pub fn ResourceBudget::default() -> ResourceBudget {
 pub(all) enum BddError {
   InvalidBudget(String, Int)
   EmptyVariable
+  InvalidVariableName(String)
   DuplicateVariable(String)
   UnknownVariable(String)
   ForeignHandle

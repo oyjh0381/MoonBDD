@@ -27,8 +27,8 @@ canonically; it is not a workflow runtime or a general CTL/LTL model checker.
 - Non-destructive explicit and adjacent-window Variable reordering: old
   Managers and BDD Handles remain valid.
 - Finite symbolic Reachability Fixed Points with optional invariant witnesses.
-- Explicit Resource Budgets on nodes, work, input, output, depth, enumeration,
-  reordering, and reachability iterations.
+- Explicit Resource Budgets on nodes, cache entries, work, input, output,
+  depth, enumeration, reordering, and reachability iterations.
 - Portable core checked on Wasm, Wasm-GC, JavaScript, and Native; Native CLI for
   scripting and stdin integration.
 
@@ -70,11 +70,14 @@ moon run cmd/moonbdd --target native -- compile a,b "a -> b"
 moon run cmd/moonbdd --target native -- dot a,b "a & b" constraint
 moon run cmd/moonbdd --target native -- reorder a,c,b,d a,b,c,d "(a & b) | (c & d)"
 moon run cmd/moonbdd --target native -- reach
+# Read an expression from a file (PowerShell users should quote the @ argument)
+moon run cmd/moonbdd --target native -- count a,b "@constraints.bdd"
 ```
 
-Pass `-` as the expression argument to read UTF-8 text from stdin. Successful
-machine-readable commands write to stdout. Failures write `MOONBDD_ERROR` to
-stderr and exit non-zero.
+Pass `-` as the expression argument to read UTF-8 text from stdin, or `@PATH`
+to read an explicit UTF-8 file. Successful machine-readable commands write to
+stdout. Failures write `MOONBDD_ERROR` followed by a JSON object to stderr and
+use the categorized exit codes documented in [CLI](docs/CLI.md).
 
 ## Runnable examples
 
@@ -106,7 +109,8 @@ ZDD/ADD/MDD variants, Graphviz rendering, or caller-code sandboxing.
 See [API](docs/API.md), [algorithms](docs/ALGORITHMS.md),
 [architecture](docs/ARCHITECTURE.md), [CLI](docs/CLI.md),
 [resource limits](docs/RESOURCE_LIMITS.md), [testing](docs/TESTING.md), and
-[security](SECURITY.md).
+[security](SECURITY.md). Maintainers use the reproducible
+[release checklist](docs/RELEASE.md).
 
 ## Provenance and license
 

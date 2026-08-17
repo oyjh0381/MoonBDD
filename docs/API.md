@@ -3,7 +3,10 @@
 ## Ownership and construction
 
 `Manager::new(variable_names, budget)` validates a unique non-empty Variable
-Order. All returned BDD Handles belong to that exact Manager object.
+Order. Names follow the parser-compatible ASCII grammar
+`[A-Za-z_][A-Za-z0-9_.]*`; reserved literals `true` and `false` are rejected.
+This guarantees canonical expressions can be parsed by a Manager with the same
+order. All returned BDD Handles belong to that exact Manager object.
 `validate` reports `ForeignHandle` for any other Manager, even with identical
 names. Use `variable` or `compile`; `evaluate` consumes assignments and
 `Bdd::same` provides constant-time canonical equality within one Manager.

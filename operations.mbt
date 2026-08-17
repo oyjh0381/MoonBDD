@@ -104,7 +104,9 @@ fn Manager::ite_root(
     Ok(root) => root
     Err(error) => return Err(error)
   }
-  self.ite_cache.set(key, root)
+  if self.ite_cache.length() < self.budget.max_cache_entries {
+    self.ite_cache.set(key, root)
+  }
   Ok(root)
 }
 
