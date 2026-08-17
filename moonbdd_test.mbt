@@ -91,3 +91,104 @@ test "ITE and negation are canonical and ownership checked" {
   )
   assert_true(manager.and_bdd(a, foreign) is Err(ForeignHandle))
 }
+
+///|
+test "expression compiler honours precedence and associativity" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b", "c"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let value = manager.compile("!a | b & c -> a ^ c").unwrap()
+  assert_eq(
+    manager.evaluate(value, [("a", false), ("b", false), ("c", false)]),
+    Ok(false),
+  )
+  assert_eq(
+    manager.evaluate(value, [("a", true), ("b", true), ("c", false)]),
+    Ok(true),
+  )
+  let forward = manager.compile("a -> b -> c").unwrap()
+  let explicit = manager.compile("a -> (b -> c)").unwrap()
+  assert_true(forward.same(explicit))
+}
+
+///|
+test "expression compiler reports stable source positions" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  match manager.compile("a & )") {
+    Err(ParseFailure(diagnostic)) => assert_eq(diagnostic.offset, 4)
+    _ => fail("expected parse failure")
+  }
+  assert_true(
+    manager.compile("a & missing") is Err(CompileFailure(UnknownVariable("missing"))),
+  )
+}
+
+///|
+test "restriction composition and quantification preserve Boolean meaning" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b", "c"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let formula = manager.compile("(a & b) | (!a & c)").unwrap()
+  assert_eq(manager.support(formula).unwrap(), ["a", "b", "c"])
+  let restricted = manager.restrict(formula, [("a", true)]).unwrap()
+  assert_true(restricted.same(manager.variable("b").unwrap()))
+  let composed = manager.compose(formula, "a", manager.variable("c").unwrap()).unwrap()
+  let expected = manager.compile("(c & b) | (!c & c)").unwrap()
+  assert_true(composed.same(expected))
+  let exists_a = manager.exists(formula, ["a"]).unwrap()
+  assert_true(exists_a.same(manager.compile("b | c").unwrap()))
+  let forall_a = manager.forall(formula, ["a"]).unwrap()
+  assert_true(forall_a.same(manager.compile("b & c").unwrap()))
+}
+
+///|
+test "transformations reject unknown variables and foreign replacements" {
+  let budget = @moonbdd.ResourceBudget::default()
+  let manager = @moonbdd.Manager::new(["a"], budget).unwrap()
+  let foreign_manager = @moonbdd.Manager::new(["a"], budget).unwrap()
+  let a = manager.variable("a").unwrap()
+  let foreign = foreign_manager.variable("a").unwrap()
+  assert_true(manager.restrict(a, [("missing", true)]) is Err(UnknownVariable(_)))
+  assert_true(manager.exists(a, ["missing"]) is Err(UnknownVariable(_)))
+  assert_true(manager.compose(a, "a", foreign) is Err(ForeignHandle))
+}
+
+///|
+test "models and counts include variables skipped by reduced paths" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b", "unused"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let formula = manager.compile("a | b").unwrap()
+  assert_eq(manager.sat_count_u64(formula), Ok(6UL))
+  assert_eq(manager.sat_count_decimal(formula), Ok("6"))
+  let witness = manager.sat_one(formula).unwrap().unwrap()
+  assert_eq(manager.evaluate(formula, witness.values), Ok(true))
+  let enumeration = manager.enumerate_models(formula, 2).unwrap()
+  assert_eq(enumeration.models.length(), 2)
+  assert_false(enumeration.complete)
+}
+
+///|
+test "exact model count exceeds UInt64 without losing precision" {
+  let names : Array[String] = []
+  for i = 0; i < 70; i = i + 1 {
+    names.push("x\{i}")
+  }
+  let manager = @moonbdd.Manager::new(
+    names,
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let tautology = manager.true_bdd()
+  assert_true(manager.sat_count_u64(tautology) is Err(ArithmeticOverflow))
+  assert_eq(
+    manager.sat_count_decimal(tautology),
+    Ok("1180591620717411303424"),
+  )
+  assert_eq(manager.sat_one(manager.false_bdd()), Ok(None))
+}
