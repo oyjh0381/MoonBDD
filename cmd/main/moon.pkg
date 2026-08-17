@@ -1,5 +1,0 @@
-// import {
-//   "oyjh0381/moonbdd" @lib,
-// }
-
-pkgtype(kind: "executable")

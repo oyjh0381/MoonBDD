@@ -30,3 +30,7 @@ keywords = [
 preferred_target = "wasm-gc"
 
 description = "Canonical ROBDDs and bounded symbolic state-space analysis for MoonBit"
+
+import {
+  "moonbitlang/async@0.20.6",
+}
