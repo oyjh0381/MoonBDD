@@ -192,3 +192,145 @@ test "exact model count exceeds UInt64 without losing precision" {
   )
   assert_eq(manager.sat_one(manager.false_bdd()), Ok(None))
 }
+
+///|
+test "versioned JSON is deterministic and round-trips Boolean meaning" {
+  let budget = @moonbdd.ResourceBudget::default()
+  let manager = @moonbdd.Manager::new(["a", "b"], budget).unwrap()
+  let formula = manager.compile("a ^ b").unwrap()
+  let encoded = manager.encode_json(formula).unwrap()
+  assert_eq(encoded, manager.encode_json(formula).unwrap())
+  let (restored_manager, restored) = @moonbdd.Manager::decode_json(encoded, budget).unwrap()
+  for assignment in [
+    [("a", false), ("b", false)],
+    [("a", false), ("b", true)],
+    [("a", true), ("b", false)],
+    [("a", true), ("b", true)],
+  ] {
+    assert_eq(
+      restored_manager.evaluate(restored, assignment),
+      manager.evaluate(formula, assignment),
+    )
+  }
+}
+
+///|
+test "JSON decoder rejects incompatible and malformed topology" {
+  let budget = @moonbdd.ResourceBudget::default()
+  assert_true(
+    @moonbdd.Manager::decode_json(
+      "{\"schema_version\":2,\"variables\":[],\"nodes\":[],\"root\":1}",
+      budget,
+    ) is Err(UnsupportedVersion(2)),
+  )
+  assert_true(
+    @moonbdd.Manager::decode_json(
+      "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":2,\"variable\":0,\"low\":2,\"high\":1}],\"root\":2}",
+      budget,
+    ) is Err(InvalidArtifact(_)),
+  )
+}
+
+///|
+test "statistics and DOT inspect only reachable ROBDD structure" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b", "unused"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let formula = manager.compile("a & b").unwrap()
+  ignore(manager.variable("unused"))
+  let stats = manager.statistics(formula).unwrap()
+  assert_eq(stats.reachable_nodes, 2)
+  assert_eq(stats.support_variables, 2)
+  assert_true(stats.retained_nodes >= stats.reachable_nodes)
+  let dot = manager.to_dot(formula, "constraint").unwrap()
+  assert_eq(dot, manager.to_dot(formula, "constraint").unwrap())
+  assert_true(dot.contains("digraph MoonBDD"))
+  assert_true(dot.contains("constraint"))
+  assert_false(dot.contains("unused"))
+}
+
+///|
+test "reordering is non-destructive and preserves Boolean meaning" {
+  let budget = @moonbdd.ResourceBudget::default()
+  let manager = @moonbdd.Manager::new(["a", "c", "b", "d"], budget).unwrap()
+  let formula = manager.compile("(a & b) | (c & d)").unwrap()
+  let before = manager.reachable_node_count(formula)
+  let reordered = manager.reorder(formula, ["a", "b", "c", "d"]).unwrap()
+  assert_eq(reordered.before_nodes, before)
+  assert_true(reordered.after_nodes <= reordered.manager.retained_node_count())
+  for bits in [
+    [false, false, false, false],
+    [true, false, true, false],
+    [false, true, false, true],
+    [true, true, false, false],
+  ] {
+    let source_assignment = [
+      ("a", bits[0]), ("c", bits[1]), ("b", bits[2]), ("d", bits[3]),
+    ]
+    let target_assignment = [
+      ("a", bits[0]), ("b", bits[2]), ("c", bits[1]), ("d", bits[3]),
+    ]
+    assert_eq(
+      manager.evaluate(formula, source_assignment),
+      reordered.manager.evaluate(reordered.root, target_assignment),
+    )
+  }
+  assert_eq(manager.evaluate(formula, [("a", true), ("c", false), ("b", true), ("d", false)]), Ok(true))
+  assert_true(manager.and_bdd(formula, reordered.root) is Err(ForeignHandle))
+}
+
+///|
+test "reordering rejects non-permutations" {
+  let manager = @moonbdd.Manager::new(
+    ["a", "b"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let value = manager.compile("a | b").unwrap()
+  assert_true(manager.reorder(value, ["a", "a"]) is Err(InvalidArgument(_)))
+  assert_true(manager.reorder(value, ["a"]) is Err(InvalidArgument(_)))
+}
+
+///|
+test "symbolic reachability computes a finite fixed point and invariant witness" {
+  let manager = @moonbdd.Manager::new(
+    ["p", "q", "p_next", "q_next"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  let encoding = manager.state_encoding(
+    ["p", "q"],
+    ["p_next", "q_next"],
+  ).unwrap()
+  let initial = manager.compile("!p & !q").unwrap()
+  let transition = manager.compile(
+    "(!p & !q & ((!p_next & !q_next) | (p_next & !q_next) | (!p_next & q_next))) | (p & !q & ((!p_next & !q_next) | (p_next & !q_next))) | (!p & q & ((!p_next & !q_next) | (!p_next & q_next)))",
+  ).unwrap()
+  let safe = manager.compile("!(p & q)").unwrap()
+  let result = manager.reach(initial, transition, encoding, Some(safe)).unwrap()
+  assert_true(result.fixed_point)
+  assert_true(result.invariant_holds)
+  assert_eq(manager.support(result.reachable).unwrap(), ["p", "q"])
+  let too_strict = manager.compile("!p").unwrap()
+  let failed = manager.reach(
+    initial,
+    transition,
+    encoding,
+    Some(too_strict),
+  ).unwrap()
+  assert_false(failed.invariant_holds)
+  assert_true(failed.witness is Some(_))
+}
+
+///|
+test "state encoding validates disjoint complete variable pairs" {
+  let manager = @moonbdd.Manager::new(
+    ["x", "x_next"],
+    @moonbdd.ResourceBudget::default(),
+  ).unwrap()
+  assert_true(
+    manager.state_encoding(["x"], []) is Err(InvalidArgument(_)),
+  )
+  assert_true(
+    manager.state_encoding(["x"], ["x"]) is Err(InvalidArgument(_)),
+  )
+}

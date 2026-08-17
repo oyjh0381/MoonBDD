@@ -41,6 +41,7 @@ pub(all) enum BddError {
   DepthBudgetExceeded(Int)
   ModelBudgetExceeded(Int)
   OutputBudgetExceeded(Int)
+  IterationBudgetExceeded(Int)
   ArithmeticOverflow
   InvalidArgument(String)
   InvalidArtifact(String)
