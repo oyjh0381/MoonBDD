@@ -1,0 +1,6 @@
+import {
+  "oyjh0381/moonbdd" @bdd,
+  "moonbitlang/core/debug",
+}
+
+pkgtype(kind: "executable")
