@@ -10,6 +10,8 @@ version recorded in the release notes.
    `moon test --target all --deny-warn`.
 3. Run `python tools/test_cli.py`, `python tools/benchmark.py`,
    `python tools/count_moonbit_loc.py`, and all three documented examples.
+   The LOC command must exit successfully with at least 4,000 non-empty,
+   non-line-comment MoonBit source lines.
    Confirm `git diff --exit-code` and `git status` are clean afterward.
 4. Run `moon publish --dry-run`; inspect the package file list and generated
    interface. Confirm Apache-2.0 provenance and third-party notices.

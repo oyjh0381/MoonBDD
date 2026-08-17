@@ -49,6 +49,13 @@ def main() -> int:
         require(file_count.returncode == 0, file_count.stderr)
         require(file_count.stdout == "2\n", file_count.stdout)
 
+        oversized_file = Path(directory) / "oversized.constraints"
+        oversized_file.write_text("large=" + "a" * 1_048_576, encoding="utf-8")
+        oversized = run("diagnose", "a", f"@{oversized_file}")
+        require(oversized.returncode == 6, oversized.stderr)
+        oversized_error = json.loads(oversized.stderr.removeprefix("MOONBDD_ERROR "))
+        require(oversized_error["code"] == "resource_budget", oversized.stderr)
+
     witness = run("sat-one", "a,b", "a ^ b")
     require(witness.returncode == 0, witness.stderr)
     values = json.loads(witness.stdout)
@@ -92,6 +99,14 @@ def main() -> int:
         diagnosis.stdout,
     )
 
+    too_many_constraints = ";".join(f"constraint-{i}=a" for i in range(257))
+    constraint_limit = run("diagnose", "a", too_many_constraints)
+    require(constraint_limit.returncode == 6, constraint_limit.stderr)
+    constraint_limit_error = json.loads(
+        constraint_limit.stderr.removeprefix("MOONBDD_ERROR ")
+    )
+    require(constraint_limit_error["code"] == "resource_budget", constraint_limit.stderr)
+
     malformed = run("count", "a", "a & )")
     require(malformed.returncode == 3, malformed.stderr)
     malformed_error = json.loads(malformed.stderr.removeprefix("MOONBDD_ERROR "))
@@ -111,7 +126,7 @@ def main() -> int:
     require(usage.returncode == 2, usage.stderr)
     usage_error = json.loads(usage.stderr.removeprefix("MOONBDD_ERROR "))
     require(usage_error["code"] == "usage", usage.stderr)
-    print("CLI contract: 14 scenarios passed")
+    print("CLI contract: 16 scenarios passed")
     return 0
 
 

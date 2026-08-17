@@ -101,7 +101,7 @@ The portable core will target Wasm, Wasm-GC, JavaScript, and Native where suppor
 - The portable library core must not depend on host files, clocks, randomness, processes, sockets, or threads. Native filesystem orchestration belongs to the CLI.
 - Public errors distinguish invalid arguments, ownership violations, parse diagnostics, malformed artifacts, unsupported versions, arithmetic overflow, budget exhaustion, and I/O or CLI failures.
 - The competition proposal follows the structure and concise style of the existing MoonOCI proposal and the official template. Contestant and contact fields remain explicit placeholders until supplied by the user.
-- Effective MoonBit source scale is expected to be approximately 5,000–9,000 lines, but real functionality and clarity take priority over line-count padding.
+- Effective MoonBit source scale is expected to remain within the charter's approximately 4,000–9,000-line working range, but real functionality and clarity take priority over line-count padding.
 
 ## Testing Decisions
 

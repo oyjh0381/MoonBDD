@@ -126,6 +126,22 @@ test "cube enumeration covers constants truncation and budgets" {
     manager.cube_to_bdd({ values: [("a", true), ("a", false)] })
     is Err(InvalidArgument(_)),
   )
+  let analysis_limited = @moonbdd.Manager::new(["a"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_analysis_steps: 1,
+  }).unwrap()
+  assert_true(
+    analysis_limited.cube_to_bdd({ values: [("a", true)] })
+    is Err(AnalysisBudgetExceeded(1)),
+  )
+  let scan_limited = @moonbdd.Manager::new(["a", "b"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_analysis_steps: 2,
+  }).unwrap()
+  assert_true(
+    scan_limited.cube_to_bdd({ values: [("b", true)] })
+    is Err(AnalysisBudgetExceeded(2)),
+  )
 }
 
 ///|
@@ -258,4 +274,35 @@ test "empty constraint sets are satisfiable identity conjunctions" {
   assert_true(report.witness is Some(_))
   assert_eq(report.minimal_conflict, [])
   assert_eq(report.redundant, [])
+}
+
+///|
+test "constraint diagnosis charges semantic checks to analysis steps" {
+  let manager = @moonbdd.Manager::new(["a"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_analysis_steps: 2,
+  }).unwrap()
+  assert_true(
+    manager.diagnose_constraints([{ name: "one", expression: "a" }])
+    is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(2))),
+  )
+  let redundancy_limited = @moonbdd.Manager::new(["a"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_analysis_steps: 3,
+  }).unwrap()
+  assert_true(
+    redundancy_limited.diagnose_constraints([{ name: "one", expression: "a" }])
+    is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(3))),
+  )
+  let conflict_limited = @moonbdd.Manager::new(["a"], {
+    ..@moonbdd.ResourceBudget::default(),
+    max_analysis_steps: 6,
+  }).unwrap()
+  assert_true(
+    conflict_limited.diagnose_constraints([
+      { name: "positive", expression: "a" },
+      { name: "negative", expression: "!a" },
+    ])
+    is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(6))),
+  )
 }

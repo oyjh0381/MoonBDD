@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MINIMUM_EFFECTIVE_LOC = 4_000
 
 
 def main() -> int:
@@ -31,8 +32,12 @@ def main() -> int:
             effective += 1
     print(
         f"MoonBit LOC: files={len(files)} physical={physical} "
-        f"nonblank={nonblank} effective_noncomment={effective}"
+        f"nonblank={nonblank} effective_noncomment={effective} "
+        f"minimum={MINIMUM_EFFECTIVE_LOC}"
     )
+    if effective < MINIMUM_EFFECTIVE_LOC:
+        print("MoonBit LOC check failed: effective source is below the OSC reference floor")
+        return 1
     return 0
 
 

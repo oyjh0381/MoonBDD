@@ -291,7 +291,12 @@ pub fn Manager::cube_to_bdd(
   cube : Cube,
 ) -> Result[Bdd, BddError] {
   let selected : @hashmap.HashMap[Int, Bool] = @hashmap.HashMap([])
+  let counter = AnalysisCounter::new(self.budget.max_analysis_steps)
   for pair in cube.values {
+    match counter.step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
     let (name, choice) = pair
     let variable = match self.variable_index.get(name) {
       None => return Err(UnknownVariable(name))
@@ -303,7 +308,15 @@ pub fn Manager::cube_to_bdd(
     selected.set(variable, choice)
   }
   let mut result = self.true_bdd()
+  if selected.length() == 0 {
+    return Ok(result)
+  }
+  let mut remaining = selected.length()
   for variable, name in self.variables {
+    match counter.step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
     match selected.get(variable) {
       None => ()
       Some(choice) => {
@@ -322,6 +335,10 @@ pub fn Manager::cube_to_bdd(
         result = match self.and_bdd(result, literal) {
           Ok(value) => value
           Err(error) => return Err(error)
+        }
+        remaining -= 1
+        if remaining == 0 {
+          return Ok(result)
         }
       }
     }
@@ -498,6 +515,10 @@ fn Manager::diagnose_satisfiable(
       Ok(value) => value
       Err(error) => return Err(error)
     }
+    match counter.constraint_step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
     let check = match self.check_entailment(without, retained[index].1) {
       Ok(value) => value
       Err(error) => return Err(constraint_failure(error))
@@ -532,6 +553,10 @@ fn Manager::diagnose_unsatisfiable(
     let without = match self.conjoin_constraints(candidate, counter) {
       Ok(value) => value
       Err(error) => return Err(error)
+    }
+    match counter.constraint_step() {
+      Err(error) => return Err(error)
+      Ok(_) => ()
     }
     if self.is_false(without) {
       ignore(core.remove(index))
@@ -588,6 +613,10 @@ pub fn Manager::diagnose_constraints(
   let combined = match self.conjoin_constraints(compiled, counter) {
     Ok(value) => value
     Err(error) => return Err(error)
+  }
+  match counter.constraint_step() {
+    Err(error) => return Err(error)
+    Ok(_) => ()
   }
   match self.sat_one(combined) {
     Err(error) => Err(constraint_failure(error))

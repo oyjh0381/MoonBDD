@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: moonbitlang/setup-moonbit@v1
+      - uses: hustcer/setup-moonbit@v1
       - name: Resolve dependencies
         run: moon update
       - name: Check every target
@@ -27,3 +27,7 @@ jobs:
         run: moon info && git diff --exit-code
       - name: Test Native CLI
         run: python tools/test_cli.py
+      - name: Verify performance and effective source scale
+        run: |
+          python tools/benchmark.py
+          python tools/count_moonbit_loc.py

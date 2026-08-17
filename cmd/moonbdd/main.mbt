@@ -197,31 +197,43 @@ fn bounded_cli_output(output : String) -> Result[String, String] {
 ///|
 fn parse_named_constraints(
   text : String,
+  budget : @bdd.ResourceBudget,
 ) -> Result[Array[@bdd.NamedConstraint], String] {
-  if text == "" {
+  let data = @utf8.encode(text)
+  if data.length() > budget.max_input_bytes {
+    return Err(error_text(@bdd.InputBudgetExceeded(budget.max_input_bytes)))
+  }
+  if data.length() == 0 {
     return Ok([])
   }
   let constraints : Array[@bdd.NamedConstraint] = []
-  for part in text.split(";") {
-    let item = part.to_owned()
-    let data = @utf8.encode(item)
-    let mut separator = -1
-    for index = 0; index < data.length(); index = index + 1 {
-      if data[index] == b'=' {
-        separator = index
-        break
+  let mut start = 0
+  for end = 0; end <= data.length(); end = end + 1 {
+    if end == data.length() || data[end] == b';' {
+      if constraints.length() >= budget.max_constraints {
+        return Err(
+          error_text(@bdd.ConstraintBudgetExceeded(budget.max_constraints)),
+        )
       }
+      let mut separator = -1
+      for index = start; index < end; index = index + 1 {
+        if data[index] == b'=' {
+          separator = index
+          break
+        }
+      }
+      if separator <= start || separator == end - 1 {
+        return Err("InvalidArgument: each constraint must be NAME=EXPRESSION")
+      }
+      let name = @utf8.decode(data[start:separator]) catch {
+        _ => return Err("InvalidArgument: constraint name is not UTF-8")
+      }
+      let expression = @utf8.decode(data[separator + 1:end]) catch {
+        _ => return Err("InvalidArgument: constraint expression is not UTF-8")
+      }
+      constraints.push({ name, expression })
+      start = end + 1
     }
-    if separator <= 0 || separator == data.length() - 1 {
-      return Err("InvalidArgument: each constraint must be NAME=EXPRESSION")
-    }
-    let name = @utf8.decode(data[0:separator]) catch {
-      _ => return Err("InvalidArgument: constraint name is not UTF-8")
-    }
-    let expression = @utf8.decode(data[separator + 1:]) catch {
-      _ => return Err("InvalidArgument: constraint expression is not UTF-8")
-    }
-    constraints.push({ name, expression })
   }
   Ok(constraints)
 }
@@ -305,12 +317,12 @@ async fn run_diagnose(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let constraints = match parse_named_constraints(source) {
+  let budget = @bdd.ResourceBudget::default()
+  let constraints = match parse_named_constraints(source, budget) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let manager = match
-    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+  let manager = match @bdd.Manager::new(variables, budget) {
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
@@ -397,7 +409,8 @@ async fn run_formula_command(
       }
     "backbone" =>
       match manager.backbone(value) {
-        Ok(assignments) => Ok(assignment_json(assignments) + "\n")
+        Ok(assignments) =>
+          bounded_cli_output(assignment_json(assignments) + "\n")
         Err(error) => Err(error_text(error))
       }
     "dot" =>
