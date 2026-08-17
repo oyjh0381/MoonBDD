@@ -1,0 +1,110 @@
+///|
+/// Deterministic public statistics for one BDD Handle.
+pub(all) struct BddStatistics {
+  declared_variables : Int
+  support_variables : Int
+  reachable_nodes : Int
+  retained_nodes : Int
+  model_count_decimal : String
+} derive(Debug, Eq)
+
+///|
+pub fn Manager::statistics(
+  self : Manager,
+  value : Bdd,
+) -> Result[BddStatistics, BddError] {
+  let support = match self.support(value) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let count = match self.sat_count_decimal(value) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok({
+    declared_variables: self.variables.length(),
+    support_variables: support.length(),
+    reachable_nodes: self.reachable_node_count(value),
+    retained_nodes: self.retained_node_count(),
+    model_count_decimal: count,
+  })
+}
+
+///|
+fn dot_node_name(id : Int) -> String {
+  if id == 0 { "false_terminal" } else if id == 1 { "true_terminal" } else {
+    "n" + id.to_string()
+  }
+}
+
+///|
+/// Export reachable structure as deterministic Graphviz DOT.
+pub fn Manager::to_dot(
+  self : Manager,
+  value : Bdd,
+  root_name : String,
+) -> Result[String, BddError] {
+  match self.validate(value) {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  let ordered : Array[Int] = []
+  match self.postorder_visit(
+    value.root,
+    @hashmap.HashMap([]),
+    ordered,
+    WorkCounter::new(self.budget.max_work),
+    0,
+  ) {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  let remap : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([(0, 0), (1, 1)])
+  for index, old_id in ordered {
+    remap.set(old_id, index + 2)
+  }
+  let lines : Array[String] = [
+    "digraph MoonBDD {",
+    "  rankdir=TB;",
+    "  label=" + json_quote(root_name) + ";",
+    "  false_terminal [shape=box,label=\"false\"];",
+    "  true_terminal [shape=box,label=\"true\"];",
+  ]
+  for index, old_id in ordered {
+    let id = index + 2
+    let node = self.nodes[old_id]
+    let low = remap.get(node.low).unwrap()
+    let high = remap.get(node.high).unwrap()
+    lines.push(
+      "  n" +
+      id.to_string() +
+      " [label=" +
+      json_quote(self.variables[node.variable]) +
+      "];",
+    )
+    lines.push(
+      "  n" +
+      id.to_string() +
+      " -> " +
+      dot_node_name(low) +
+      " [style=dashed,label=\"0\"];",
+    )
+    lines.push(
+      "  n" +
+      id.to_string() +
+      " -> " +
+      dot_node_name(high) +
+      " [style=solid,label=\"1\"];",
+    )
+  }
+  let root = remap.get(value.root).unwrap()
+  lines.push("  root [shape=plaintext,label=" + json_quote(root_name) + "];")
+  lines.push("  root -> " + dot_node_name(root) + ";")
+  lines.push("}")
+  let encoded = lines.join("\n") + "\n"
+  if encoded.length() > self.budget.max_output_bytes {
+    Err(OutputBudgetExceeded(self.budget.max_output_bytes))
+  } else {
+    Ok(encoded)
+  }
+}
