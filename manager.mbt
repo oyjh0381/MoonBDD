@@ -51,6 +51,7 @@ pub fn Manager::new(
       { variable: -1, low: 1, high: 1 },
     ],
     unique: @hashmap.HashMap([]),
+    ite_cache: @hashmap.HashMap([]),
   })
 }
 

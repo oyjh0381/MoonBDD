@@ -66,7 +66,14 @@ struct NodeKey {
   variable : Int
   low : Int
   high : Int
-} derive(Debug, Eq, Hash)
+} derive(Eq, Hash)
+
+///|
+priv struct IteKey {
+  condition : Int
+  then_root : Int
+  else_root : Int
+} derive(Eq, Hash)
 
 ///|
 /// Owner of one Variable Order and one canonical ROBDD node universe.
@@ -76,6 +83,7 @@ pub struct Manager {
   budget : ResourceBudget
   priv nodes : Array[DecisionNode]
   priv unique : @hashmap.HashMap[NodeKey, Int]
+  priv ite_cache : @hashmap.HashMap[IteKey, Int]
 }
 
 ///|
