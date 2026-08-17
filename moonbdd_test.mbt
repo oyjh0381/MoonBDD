@@ -248,6 +248,12 @@ test "statistics and DOT inspect only reachable ROBDD structure" {
   assert_true(dot.contains("digraph MoonBDD"))
   assert_true(dot.contains("constraint"))
   assert_false(dot.contains("unused"))
+  let canonical = manager.canonical_expression(formula).unwrap()
+  assert_true(manager.compile(canonical).unwrap().same(formula))
+  assert_eq(
+    canonical,
+    manager.canonical_expression(manager.compile("b & a").unwrap()).unwrap(),
+  )
 }
 
 ///|

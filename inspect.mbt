@@ -108,3 +108,75 @@ pub fn Manager::to_dot(
     Ok(encoded)
   }
 }
+
+///|
+fn Manager::canonical_expression_root(
+  self : Manager,
+  root : Int,
+  memo : @hashmap.HashMap[Int, String],
+  work : WorkCounter,
+  depth : Int,
+) -> Result[String, BddError] {
+  if root == 0 {
+    return Ok("false")
+  }
+  if root == 1 {
+    return Ok("true")
+  }
+  if depth > self.budget.max_depth {
+    return Err(DepthBudgetExceeded(self.budget.max_depth))
+  }
+  match work.step() {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  match memo.get(root) {
+    Some(value) => return Ok(value)
+    None => ()
+  }
+  let node = self.nodes[root]
+  let low = match self.canonical_expression_root(
+    node.low,
+    memo,
+    work,
+    depth + 1,
+  ) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let high = match self.canonical_expression_root(
+    node.high,
+    memo,
+    work,
+    depth + 1,
+  ) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let name = self.variables[node.variable]
+  let encoded = "((!" + name + " & " + low + ") | (" + name + " & " + high + "))"
+  if encoded.length() > self.budget.max_output_bytes {
+    return Err(OutputBudgetExceeded(self.budget.max_output_bytes))
+  }
+  memo.set(root, encoded)
+  Ok(encoded)
+}
+
+///|
+/// Produce a deterministic parser-compatible Shannon expansion. Equivalent
+/// BDD Handles in one Manager produce byte-identical text.
+pub fn Manager::canonical_expression(
+  self : Manager,
+  value : Bdd,
+) -> Result[String, BddError] {
+  match self.validate(value) {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  self.canonical_expression_root(
+    value.root,
+    @hashmap.HashMap([]),
+    WorkCounter::new(self.budget.max_work),
+    0,
+  )
+}
