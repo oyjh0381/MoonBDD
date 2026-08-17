@@ -1,9 +1,6 @@
 ///|
 fn property_manager() -> @moonbdd.Manager {
-  @moonbdd.Manager::new(
-    ["a", "b", "c"],
-    @moonbdd.ResourceBudget::default(),
-  ).unwrap()
+  @moonbdd.Manager::new(["a", "b", "c"], @moonbdd.ResourceBudget::default()).unwrap()
 }
 
 ///|
@@ -48,7 +45,9 @@ test "Boolean algebra laws hold through the public API" {
   assert_true(manager.and_bdd(a, zero).unwrap().same(zero))
   assert_true(manager.or_bdd(a, one).unwrap().same(one))
   assert_true(manager.not_bdd(manager.not_bdd(a).unwrap()).unwrap().same(a))
-  assert_true(manager.and_bdd(a, b).unwrap().same(manager.and_bdd(b, a).unwrap()))
+  assert_true(
+    manager.and_bdd(a, b).unwrap().same(manager.and_bdd(b, a).unwrap()),
+  )
   assert_true(manager.or_bdd(a, b).unwrap().same(manager.or_bdd(b, a).unwrap()))
   let and_left = manager.and_bdd(manager.and_bdd(a, b).unwrap(), c).unwrap()
   let and_right = manager.and_bdd(a, manager.and_bdd(b, c).unwrap()).unwrap()
@@ -57,10 +56,9 @@ test "Boolean algebra laws hold through the public API" {
   let or_right = manager.or_bdd(a, manager.or_bdd(b, c).unwrap()).unwrap()
   assert_true(or_left.same(or_right))
   let distributed = manager.and_bdd(a, manager.or_bdd(b, c).unwrap()).unwrap()
-  let expanded = manager.or_bdd(
-    manager.and_bdd(a, b).unwrap(),
-    manager.and_bdd(a, c).unwrap(),
-  ).unwrap()
+  let expanded = manager
+    .or_bdd(manager.and_bdd(a, b).unwrap(), manager.and_bdd(a, c).unwrap())
+    .unwrap()
   assert_true(distributed.same(expanded))
 }
 
@@ -119,14 +117,16 @@ test "restriction matches direct evaluation for every assignment" {
     for b_value in [false, true] {
       for c_value in [false, true] {
         assert_eq(
-          manager.evaluate(
-            formula,
-            [("a", a_value), ("b", b_value), ("c", c_value)],
-          ),
-          manager.evaluate(
-            restricted,
-            [("a", a_value), ("b", b_value), ("c", c_value)],
-          ),
+          manager.evaluate(formula, [
+            ("a", a_value),
+            ("b", b_value),
+            ("c", c_value),
+          ]),
+          manager.evaluate(restricted, [
+            ("a", a_value),
+            ("b", b_value),
+            ("c", c_value),
+          ]),
         )
       }
     }
@@ -167,16 +167,10 @@ test "model enumeration returns distinct satisfying complete assignments" {
 test "artifact mutations are rejected at the public decoder seam" {
   let budget = @moonbdd.ResourceBudget::default()
   let invalid = [
-    "",
-    "null",
-    "{}",
-    "{\"schema_version\":1}",
-    "{\"schema_version\":1,\"variables\":{},\"nodes\":[],\"root\":0}",
+    "", "null", "{}", "{\"schema_version\":1}", "{\"schema_version\":1,\"variables\":{},\"nodes\":[],\"root\":0}",
     "{\"schema_version\":1,\"variables\":[\"a\",\"a\"],\"nodes\":[],\"root\":0}",
-    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":{},\"root\":0}",
-    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[],\"root\":9}",
-    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[null],\"root\":2}",
-    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":3,\"variable\":0,\"low\":0,\"high\":1}],\"root\":2}",
+    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":{},\"root\":0}", "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[],\"root\":9}",
+    "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[null],\"root\":2}", "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":3,\"variable\":0,\"low\":0,\"high\":1}],\"root\":2}",
     "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":2,\"variable\":9,\"low\":0,\"high\":1}],\"root\":2}",
     "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":2,\"variable\":0,\"low\":1,\"high\":1}],\"root\":2}",
   ]
@@ -210,10 +204,7 @@ test "reorder translation preserves all assignments for every permutation" {
 
 ///|
 test "public operations preserve source Handles after bounded failures" {
-  let tiny = {
-    ..@moonbdd.ResourceBudget::default(),
-    max_work: 2,
-  }
+  let tiny = { ..@moonbdd.ResourceBudget::default(), max_work: 2 }
   let manager = @moonbdd.Manager::new(["a", "b"], tiny).unwrap()
   let a = manager.variable("a").unwrap()
   let b = manager.variable("b").unwrap()

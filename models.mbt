@@ -82,7 +82,10 @@ fn DecimalNat::times_two(self : DecimalNat) -> DecimalNat {
 }
 
 ///|
-fn DecimalNat::times_power_of_two(self : DecimalNat, exponent : Int) -> DecimalNat {
+fn DecimalNat::times_power_of_two(
+  self : DecimalNat,
+  exponent : Int,
+) -> DecimalNat {
   let mut value = self
   for i = 0; i < exponent; i = i + 1 {
     value = value.times_two()
@@ -140,7 +143,9 @@ fn Manager::count_root(
     return Ok(DecimalNat::zero())
   }
   if root == 1 {
-    return Ok(DecimalNat::one().times_power_of_two(self.variables.length() - level))
+    return Ok(
+      DecimalNat::one().times_power_of_two(self.variables.length() - level),
+    )
   }
   let key : CountKey = { root, level }
   match memo.get(key) {
@@ -148,17 +153,13 @@ fn Manager::count_root(
     None => ()
   }
   let node = self.nodes[root]
-  let low = match self.count_root(node.low, node.variable + 1, memo, work, depth + 1) {
+  let low = match
+    self.count_root(node.low, node.variable + 1, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let high = match self.count_root(
-    node.high,
-    node.variable + 1,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.count_root(node.high, node.variable + 1, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -275,14 +276,16 @@ fn Manager::enumerate_assignments(
     return Ok(())
   }
   current.push((self.variables[index], false))
-  match self.enumerate_assignments(value, index + 1, current, output, limit, work) {
+  match
+    self.enumerate_assignments(value, index + 1, current, output, limit, work) {
     Err(error) => return Err(error)
     Ok(_) => ()
   }
   ignore(current.pop())
   if output.length() < limit {
     current.push((self.variables[index], true))
-    match self.enumerate_assignments(value, index + 1, current, output, limit, work) {
+    match
+      self.enumerate_assignments(value, index + 1, current, output, limit, work) {
       Err(error) => return Err(error)
       Ok(_) => ()
     }
@@ -308,14 +311,15 @@ pub fn Manager::enumerate_models(
     return Err(ModelBudgetExceeded(self.budget.max_models))
   }
   let models : Array[Model] = []
-  match self.enumerate_assignments(
-    value,
-    0,
-    [],
-    models,
-    maximum,
-    WorkCounter::new(self.budget.max_work),
-  ) {
+  match
+    self.enumerate_assignments(
+      value,
+      0,
+      [],
+      models,
+      maximum,
+      WorkCounter::new(self.budget.max_work),
+    ) {
     Err(error) => return Err(error)
     Ok(_) => ()
   }

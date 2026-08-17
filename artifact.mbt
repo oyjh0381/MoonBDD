@@ -51,13 +51,14 @@ pub fn Manager::encode_json(
     Ok(_) => ()
   }
   let ordered : Array[Int] = []
-  match self.postorder_visit(
-    value.root,
-    @hashmap.HashMap([]),
-    ordered,
-    WorkCounter::new(self.budget.max_work),
-    0,
-  ) {
+  match
+    self.postorder_visit(
+      value.root,
+      @hashmap.HashMap([]),
+      ordered,
+      WorkCounter::new(self.budget.max_work),
+      0,
+    ) {
     Err(error) => return Err(error)
     Ok(_) => ()
   }
@@ -104,7 +105,10 @@ pub fn Manager::encode_json(
 }
 
 ///|
-fn json_object(value : Json, context : String) -> Result[Map[String, Json], BddError] {
+fn json_object(
+  value : Json,
+  context : String,
+) -> Result[Map[String, Json], BddError] {
   match value {
     Object(fields) => Ok(fields)
     _ => Err(InvalidArtifact(context + " must be an object"))
@@ -221,7 +225,9 @@ pub fn Manager::decode_json(
       Ok(value) => value
       Err(error) => return Err(error)
     }
-    if id != expected_id || variable < 0 || variable >= manager.variables.length() {
+    if id != expected_id ||
+      variable < 0 ||
+      variable >= manager.variables.length() {
       return Err(InvalidArtifact("node identity or variable is invalid"))
     }
     if low < 0 || high < 0 || low >= id || high >= id {

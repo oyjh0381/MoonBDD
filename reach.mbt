@@ -23,7 +23,9 @@ pub fn Manager::state_encoding(
   next : Array[String],
 ) -> Result[StateEncoding, BddError] {
   if current.length() == 0 || current.length() != next.length() {
-    return Err(InvalidArgument("state Variable pairs must be non-empty and equal length"))
+    return Err(
+      InvalidArgument("state Variable pairs must be non-empty and equal length"),
+    )
   }
   let seen : @hashmap.HashMap[String, Unit] = @hashmap.HashMap([])
   for name in current {
@@ -31,7 +33,9 @@ pub fn Manager::state_encoding(
       return Err(UnknownVariable(name))
     }
     if seen.get(name) is Some(_) {
-      return Err(InvalidArgument("state encoding contains a duplicate Variable"))
+      return Err(
+        InvalidArgument("state encoding contains a duplicate Variable"),
+      )
     }
     seen.set(name, ())
   }
@@ -157,11 +161,5 @@ pub fn Manager::reach(
       }
     }
   }
-  Ok({
-    reachable,
-    iterations,
-    fixed_point: fixed,
-    invariant_holds,
-    witness,
-  })
+  Ok({ reachable, iterations, fixed_point: fixed, invariant_holds, witness })
 }

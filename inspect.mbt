@@ -32,7 +32,11 @@ pub fn Manager::statistics(
 
 ///|
 fn dot_node_name(id : Int) -> String {
-  if id == 0 { "false_terminal" } else if id == 1 { "true_terminal" } else {
+  if id == 0 {
+    "false_terminal"
+  } else if id == 1 {
+    "true_terminal"
+  } else {
     "n" + id.to_string()
   }
 }
@@ -49,13 +53,14 @@ pub fn Manager::to_dot(
     Ok(_) => ()
   }
   let ordered : Array[Int] = []
-  match self.postorder_visit(
-    value.root,
-    @hashmap.HashMap([]),
-    ordered,
-    WorkCounter::new(self.budget.max_work),
-    0,
-  ) {
+  match
+    self.postorder_visit(
+      value.root,
+      @hashmap.HashMap([]),
+      ordered,
+      WorkCounter::new(self.budget.max_work),
+      0,
+    ) {
     Err(error) => return Err(error)
     Ok(_) => ()
   }
@@ -135,26 +140,26 @@ fn Manager::canonical_expression_root(
     None => ()
   }
   let node = self.nodes[root]
-  let low = match self.canonical_expression_root(
-    node.low,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let low = match
+    self.canonical_expression_root(node.low, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let high = match self.canonical_expression_root(
-    node.high,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.canonical_expression_root(node.high, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
   let name = self.variables[node.variable]
-  let encoded = "((!" + name + " & " + low + ") | (" + name + " & " + high + "))"
+  let encoded = "((!" +
+    name +
+    " & " +
+    low +
+    ") | (" +
+    name +
+    " & " +
+    high +
+    "))"
   if encoded.length() > self.budget.max_output_bytes {
     return Err(OutputBudgetExceeded(self.budget.max_output_bytes))
   }

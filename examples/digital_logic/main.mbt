@@ -6,11 +6,12 @@ fn main {
   ).unwrap()
   let sum = manager.compile("a ^ b ^ carry_in").unwrap()
   let carry = manager.compile("(a & b) | (carry_in & (a ^ b))").unwrap()
-  for input in [
-    [("a", false), ("b", false), ("carry_in", false)],
-    [("a", true), ("b", true), ("carry_in", false)],
-    [("a", true), ("b", false), ("carry_in", true)],
-  ] {
+  for
+    input in [
+      [("a", false), ("b", false), ("carry_in", false)],
+      [("a", true), ("b", true), ("carry_in", false)],
+      [("a", true), ("b", false), ("carry_in", true)],
+    ] {
     let sum_value = manager.evaluate(sum, input).unwrap()
     let carry_value = manager.evaluate(carry, input).unwrap()
     println(

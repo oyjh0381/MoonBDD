@@ -53,23 +53,12 @@ fn Manager::translate_root(
     None => ()
   }
   let node = self.nodes[root]
-  let low = match self.translate_root(
-    node.low,
-    target,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let low = match self.translate_root(node.low, target, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let high = match self.translate_root(
-    node.high,
-    target,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.translate_root(node.high, target, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -77,11 +66,11 @@ fn Manager::translate_root(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let translated = match target.ite(
-    selector,
-    { owner: target, root: high },
-    { owner: target, root: low },
-  ) {
+  let translated = match
+    target.ite(selector, { owner: target, root: high }, {
+      owner: target,
+      root: low,
+    }) {
     Ok(value) => value.root
     Err(error) => return Err(error)
   }
@@ -107,13 +96,14 @@ pub fn Manager::reorder(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let translated = match self.translate_root(
-    value.root,
-    target,
-    @hashmap.HashMap([]),
-    WorkCounter::new(self.budget.max_work),
-    0,
-  ) {
+  let translated = match
+    self.translate_root(
+      value.root,
+      target,
+      @hashmap.HashMap([]),
+      WorkCounter::new(self.budget.max_work),
+      0,
+    ) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -146,15 +136,16 @@ pub fn Manager::optimize_order(
   let mut improved = true
   while improved && attempts < self.budget.max_reorder_attempts {
     improved = false
-    for index = 0;
+    for index = 0
         index + 1 < current_manager.variables.length() &&
-        attempts < self.budget.max_reorder_attempts;
+       attempts < self.budget.max_reorder_attempts
         index = index + 1 {
       let candidate_order = current_manager.variables.copy()
       let left = candidate_order[index]
       candidate_order[index] = candidate_order[index + 1]
       candidate_order[index + 1] = left
-      let candidate = match current_manager.reorder(current_root, candidate_order) {
+      let candidate = match
+        current_manager.reorder(current_root, candidate_order) {
         Ok(value) => value
         Err(error) => return Err(error)
       }

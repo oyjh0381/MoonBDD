@@ -19,7 +19,11 @@ fn Manager::cofactor(
   } else {
     let node = self.nodes[root]
     if node.variable == variable {
-      if high { node.high } else { node.low }
+      if high {
+        node.high
+      } else {
+        node.low
+      }
     } else {
       root
     }
@@ -29,7 +33,11 @@ fn Manager::cofactor(
 ///|
 fn minimum3(first : Int, second : Int, third : Int) -> Int {
   let left = if first < second { first } else { second }
-  if left < third { left } else { third }
+  if left < third {
+    left
+  } else {
+    third
+  }
 }
 
 ///|
@@ -70,23 +78,25 @@ fn Manager::ite_root(
     self.top_variable(then_root),
     self.top_variable(else_root),
   )
-  let low = match self.ite_root(
-    self.cofactor(condition, variable, false),
-    self.cofactor(then_root, variable, false),
-    self.cofactor(else_root, variable, false),
-    work,
-    depth + 1,
-  ) {
+  let low = match
+    self.ite_root(
+      self.cofactor(condition, variable, false),
+      self.cofactor(then_root, variable, false),
+      self.cofactor(else_root, variable, false),
+      work,
+      depth + 1,
+    ) {
     Ok(root) => root
     Err(error) => return Err(error)
   }
-  let high = match self.ite_root(
-    self.cofactor(condition, variable, true),
-    self.cofactor(then_root, variable, true),
-    self.cofactor(else_root, variable, true),
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.ite_root(
+      self.cofactor(condition, variable, true),
+      self.cofactor(then_root, variable, true),
+      self.cofactor(else_root, variable, true),
+      work,
+      depth + 1,
+    ) {
     Ok(root) => root
     Err(error) => return Err(error)
   }
@@ -112,13 +122,8 @@ pub fn Manager::ite(
     }
   }
   let work = WorkCounter::new(self.budget.max_work)
-  match self.ite_root(
-    condition.root,
-    then_value.root,
-    else_value.root,
-    work,
-    0,
-  ) {
+  match
+    self.ite_root(condition.root, then_value.root, else_value.root, work, 0) {
     Ok(root) => Ok({ owner: self, root })
     Err(error) => Err(error)
   }

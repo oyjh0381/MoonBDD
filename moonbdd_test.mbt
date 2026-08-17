@@ -22,8 +22,7 @@ test "manager creates stable terminals and variables" {
 test "manager rejects duplicate variables and foreign handles" {
   let budget = @moonbdd.ResourceBudget::default()
   assert_true(
-    @moonbdd.Manager::new(["a", "a"], budget) is
-    Err(DuplicateVariable("a")),
+    @moonbdd.Manager::new(["a", "a"], budget) is Err(DuplicateVariable("a")),
   )
   let first = match @moonbdd.Manager::new(["a"], budget) {
     Ok(manager) => manager
@@ -42,10 +41,8 @@ test "manager rejects duplicate variables and foreign handles" {
 
 ///|
 test "canonical Boolean operations agree with a truth table" {
-  let manager = match @moonbdd.Manager::new(
-    ["a", "b"],
-    @moonbdd.ResourceBudget::default(),
-  ) {
+  let manager = match
+    @moonbdd.Manager::new(["a", "b"], @moonbdd.ResourceBudget::default()) {
     Ok(manager) => manager
     Err(_) => fail("unexpected manager error")
   }
@@ -68,9 +65,9 @@ test "canonical Boolean operations agree with a truth table" {
   for row in rows {
     let (values, expected) = row
     let assignment = [("a", values[0]), ("b", values[1])]
-    let actual = [both, either, different, implied, equivalent].map(
-      value => manager.evaluate(value, assignment).unwrap(),
-    )
+    let actual = [both, either, different, implied, equivalent].map(value => {
+      manager.evaluate(value, assignment).unwrap()
+    })
     assert_eq(actual, expected)
   }
 }
@@ -85,10 +82,7 @@ test "ITE and negation are canonical and ownership checked" {
   let foreign = foreign_manager.variable("a").unwrap()
   let selected = manager.ite(a, b, manager.not_bdd(b).unwrap()).unwrap()
   assert_eq(manager.evaluate(selected, [("a", true), ("b", true)]), Ok(true))
-  assert_eq(
-    manager.evaluate(selected, [("a", false), ("b", true)]),
-    Ok(false),
-  )
+  assert_eq(manager.evaluate(selected, [("a", false), ("b", true)]), Ok(false))
   assert_true(manager.and_bdd(a, foreign) is Err(ForeignHandle))
 }
 
@@ -123,7 +117,8 @@ test "expression compiler reports stable source positions" {
     _ => fail("expected parse failure")
   }
   assert_true(
-    manager.compile("a & missing") is Err(CompileFailure(UnknownVariable("missing"))),
+    manager.compile("a & missing")
+    is Err(CompileFailure(UnknownVariable("missing"))),
   )
 }
 
@@ -137,7 +132,9 @@ test "restriction composition and quantification preserve Boolean meaning" {
   assert_eq(manager.support(formula).unwrap(), ["a", "b", "c"])
   let restricted = manager.restrict(formula, [("a", true)]).unwrap()
   assert_true(restricted.same(manager.variable("b").unwrap()))
-  let composed = manager.compose(formula, "a", manager.variable("c").unwrap()).unwrap()
+  let composed = manager
+    .compose(formula, "a", manager.variable("c").unwrap())
+    .unwrap()
   let expected = manager.compile("(c & b) | (!c & c)").unwrap()
   assert_true(composed.same(expected))
   let exists_a = manager.exists(formula, ["a"]).unwrap()
@@ -153,7 +150,9 @@ test "transformations reject unknown variables and foreign replacements" {
   let foreign_manager = @moonbdd.Manager::new(["a"], budget).unwrap()
   let a = manager.variable("a").unwrap()
   let foreign = foreign_manager.variable("a").unwrap()
-  assert_true(manager.restrict(a, [("missing", true)]) is Err(UnknownVariable(_)))
+  assert_true(
+    manager.restrict(a, [("missing", true)]) is Err(UnknownVariable(_)),
+  )
   assert_true(manager.exists(a, ["missing"]) is Err(UnknownVariable(_)))
   assert_true(manager.compose(a, "a", foreign) is Err(ForeignHandle))
 }
@@ -180,16 +179,10 @@ test "exact model count exceeds UInt64 without losing precision" {
   for i = 0; i < 70; i = i + 1 {
     names.push("x\{i}")
   }
-  let manager = @moonbdd.Manager::new(
-    names,
-    @moonbdd.ResourceBudget::default(),
-  ).unwrap()
+  let manager = @moonbdd.Manager::new(names, @moonbdd.ResourceBudget::default()).unwrap()
   let tautology = manager.true_bdd()
   assert_true(manager.sat_count_u64(tautology) is Err(ArithmeticOverflow))
-  assert_eq(
-    manager.sat_count_decimal(tautology),
-    Ok("1180591620717411303424"),
-  )
+  assert_eq(manager.sat_count_decimal(tautology), Ok("1180591620717411303424"))
   assert_eq(manager.sat_one(manager.false_bdd()), Ok(None))
 }
 
@@ -200,13 +193,16 @@ test "versioned JSON is deterministic and round-trips Boolean meaning" {
   let formula = manager.compile("a ^ b").unwrap()
   let encoded = manager.encode_json(formula).unwrap()
   assert_eq(encoded, manager.encode_json(formula).unwrap())
-  let (restored_manager, restored) = @moonbdd.Manager::decode_json(encoded, budget).unwrap()
-  for assignment in [
-    [("a", false), ("b", false)],
-    [("a", false), ("b", true)],
-    [("a", true), ("b", false)],
-    [("a", true), ("b", true)],
-  ] {
+  let (restored_manager, restored) = @moonbdd.Manager::decode_json(
+    encoded, budget,
+  ).unwrap()
+  for
+    assignment in [
+      [("a", false), ("b", false)],
+      [("a", false), ("b", true)],
+      [("a", true), ("b", false)],
+      [("a", true), ("b", true)],
+    ] {
     assert_eq(
       restored_manager.evaluate(restored, assignment),
       manager.evaluate(formula, assignment),
@@ -219,15 +215,16 @@ test "JSON decoder rejects incompatible and malformed topology" {
   let budget = @moonbdd.ResourceBudget::default()
   assert_true(
     @moonbdd.Manager::decode_json(
-      "{\"schema_version\":2,\"variables\":[],\"nodes\":[],\"root\":1}",
-      budget,
-    ) is Err(UnsupportedVersion(2)),
+      "{\"schema_version\":2,\"variables\":[],\"nodes\":[],\"root\":1}", budget,
+    )
+    is Err(UnsupportedVersion(2)),
   )
   assert_true(
     @moonbdd.Manager::decode_json(
       "{\"schema_version\":1,\"variables\":[\"a\"],\"nodes\":[{\"id\":2,\"variable\":0,\"low\":2,\"high\":1}],\"root\":2}",
       budget,
-    ) is Err(InvalidArtifact(_)),
+    )
+    is Err(InvalidArtifact(_)),
   )
 }
 
@@ -265,24 +262,39 @@ test "reordering is non-destructive and preserves Boolean meaning" {
   let reordered = manager.reorder(formula, ["a", "b", "c", "d"]).unwrap()
   assert_eq(reordered.before_nodes, before)
   assert_true(reordered.after_nodes <= reordered.manager.retained_node_count())
-  for bits in [
-    [false, false, false, false],
-    [true, false, true, false],
-    [false, true, false, true],
-    [true, true, false, false],
-  ] {
+  for
+    bits in [
+      [false, false, false, false],
+      [true, false, true, false],
+      [false, true, false, true],
+      [true, true, false, false],
+    ] {
     let source_assignment = [
-      ("a", bits[0]), ("c", bits[1]), ("b", bits[2]), ("d", bits[3]),
+      ("a", bits[0]),
+      ("c", bits[1]),
+      ("b", bits[2]),
+      ("d", bits[3]),
     ]
     let target_assignment = [
-      ("a", bits[0]), ("b", bits[2]), ("c", bits[1]), ("d", bits[3]),
+      ("a", bits[0]),
+      ("b", bits[2]),
+      ("c", bits[1]),
+      ("d", bits[3]),
     ]
     assert_eq(
       manager.evaluate(formula, source_assignment),
       reordered.manager.evaluate(reordered.root, target_assignment),
     )
   }
-  assert_eq(manager.evaluate(formula, [("a", true), ("c", false), ("b", true), ("d", false)]), Ok(true))
+  assert_eq(
+    manager.evaluate(formula, [
+      ("a", true),
+      ("c", false),
+      ("b", true),
+      ("d", false),
+    ]),
+    Ok(true),
+  )
   assert_true(manager.and_bdd(formula, reordered.root) is Err(ForeignHandle))
 }
 
@@ -303,26 +315,24 @@ test "symbolic reachability computes a finite fixed point and invariant witness"
     ["p", "q", "p_next", "q_next"],
     @moonbdd.ResourceBudget::default(),
   ).unwrap()
-  let encoding = manager.state_encoding(
-    ["p", "q"],
-    ["p_next", "q_next"],
-  ).unwrap()
+  let encoding = manager
+    .state_encoding(["p", "q"], ["p_next", "q_next"])
+    .unwrap()
   let initial = manager.compile("!p & !q").unwrap()
-  let transition = manager.compile(
-    "(!p & !q & ((!p_next & !q_next) | (p_next & !q_next) | (!p_next & q_next))) | (p & !q & ((!p_next & !q_next) | (p_next & !q_next))) | (!p & q & ((!p_next & !q_next) | (!p_next & q_next)))",
-  ).unwrap()
+  let transition = manager
+    .compile(
+      "(!p & !q & ((!p_next & !q_next) | (p_next & !q_next) | (!p_next & q_next))) | (p & !q & ((!p_next & !q_next) | (p_next & !q_next))) | (!p & q & ((!p_next & !q_next) | (!p_next & q_next)))",
+    )
+    .unwrap()
   let safe = manager.compile("!(p & q)").unwrap()
   let result = manager.reach(initial, transition, encoding, Some(safe)).unwrap()
   assert_true(result.fixed_point)
   assert_true(result.invariant_holds)
   assert_eq(manager.support(result.reachable).unwrap(), ["p", "q"])
   let too_strict = manager.compile("!p").unwrap()
-  let failed = manager.reach(
-    initial,
-    transition,
-    encoding,
-    Some(too_strict),
-  ).unwrap()
+  let failed = manager
+    .reach(initial, transition, encoding, Some(too_strict))
+    .unwrap()
   assert_false(failed.invariant_holds)
   assert_true(failed.witness is Some(_))
 }
@@ -333,20 +343,13 @@ test "state encoding validates disjoint complete variable pairs" {
     ["x", "x_next"],
     @moonbdd.ResourceBudget::default(),
   ).unwrap()
-  assert_true(
-    manager.state_encoding(["x"], []) is Err(InvalidArgument(_)),
-  )
-  assert_true(
-    manager.state_encoding(["x"], ["x"]) is Err(InvalidArgument(_)),
-  )
+  assert_true(manager.state_encoding(["x"], []) is Err(InvalidArgument(_)))
+  assert_true(manager.state_encoding(["x"], ["x"]) is Err(InvalidArgument(_)))
 }
 
 ///|
 test "Resource Budgets reject work before unsafe growth" {
-  let node_budget = {
-    ..@moonbdd.ResourceBudget::default(),
-    max_nodes: 2,
-  }
+  let node_budget = { ..@moonbdd.ResourceBudget::default(), max_nodes: 2 }
   let node_manager = @moonbdd.Manager::new(["a"], node_budget).unwrap()
   assert_true(node_manager.variable("a") is Err(NodeBudgetExceeded(2)))
   let input_budget = {
@@ -355,26 +358,19 @@ test "Resource Budgets reject work before unsafe growth" {
   }
   let input_manager = @moonbdd.Manager::new(["abcd"], input_budget).unwrap()
   assert_true(
-    input_manager.compile("abcd") is
-    Err(CompileFailure(InputBudgetExceeded(3))),
+    input_manager.compile("abcd") is Err(CompileFailure(InputBudgetExceeded(3))),
   )
-  let model_budget = {
-    ..@moonbdd.ResourceBudget::default(),
-    max_models: 1,
-  }
+  let model_budget = { ..@moonbdd.ResourceBudget::default(), max_models: 1 }
   let model_manager = @moonbdd.Manager::new(["a"], model_budget).unwrap()
   assert_true(
-    model_manager.enumerate_models(model_manager.true_bdd(), 2) is
-    Err(ModelBudgetExceeded(1)),
+    model_manager.enumerate_models(model_manager.true_bdd(), 2)
+    is Err(ModelBudgetExceeded(1)),
   )
 }
 
 ///|
 test "failed bounded operations preserve existing BDD Handles" {
-  let budget = {
-    ..@moonbdd.ResourceBudget::default(),
-    max_output_bytes: 16,
-  }
+  let budget = { ..@moonbdd.ResourceBudget::default(), max_output_bytes: 16 }
   let manager = @moonbdd.Manager::new(["a"], budget).unwrap()
   let a = manager.variable("a").unwrap()
   assert_true(manager.encode_json(a) is Err(OutputBudgetExceeded(16)))

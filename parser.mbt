@@ -57,7 +57,8 @@ fn ExpressionParser::consume_byte(
 fn ExpressionParser::consume_arrow(self : ExpressionParser) -> Bool {
   self.skip_space()
   if self.cursor + 1 < self.data.length() &&
-    self.data[self.cursor] == b'-' && self.data[self.cursor + 1] == b'>' {
+    self.data[self.cursor] == b'-' &&
+    self.data[self.cursor + 1] == b'>' {
     self.cursor += 2
     true
   } else {
@@ -88,9 +89,7 @@ fn identifier_start(byte : Byte) -> Bool {
 
 ///|
 fn identifier_continue(byte : Byte) -> Bool {
-  identifier_start(byte) ||
-  (byte >= b'0' && byte <= b'9') ||
-  byte == b'.'
+  identifier_start(byte) || (byte >= b'0' && byte <= b'9') || byte == b'.'
 }
 
 ///|
@@ -104,7 +103,9 @@ fn from_bdd_result(
 }
 
 ///|
-fn ExpressionParser::enter(self : ExpressionParser) -> Result[Unit, ExpressionError] {
+fn ExpressionParser::enter(
+  self : ExpressionParser,
+) -> Result[Unit, ExpressionError] {
   if self.nesting >= self.manager.budget.max_depth {
     Err(CompileFailure(DepthBudgetExceeded(self.manager.budget.max_depth)))
   } else {
@@ -289,12 +290,7 @@ pub fn Manager::compile(
   if data.length() > self.budget.max_input_bytes {
     return Err(CompileFailure(InputBudgetExceeded(self.budget.max_input_bytes)))
   }
-  let parser : ExpressionParser = {
-    manager: self,
-    data,
-    cursor: 0,
-    nesting: 0,
-  }
+  let parser : ExpressionParser = { manager: self, data, cursor: 0, nesting: 0 }
   let value = match parser.parse_equivalence() {
     Ok(value) => value
     Err(error) => return Err(error)

@@ -66,9 +66,7 @@ fn model_json(model : @bdd.Model) -> String {
   for pair in model.values {
     let (name, value) = pair
     let encoded_value = if value { "true" } else { "false" }
-    fields.push(
-      Json::string(name).stringify() + ":" + encoded_value,
-    )
+    fields.push(Json::string(name).stringify() + ":" + encoded_value)
   }
   "{" + fields.join(",") + "}"
 }
@@ -84,7 +82,8 @@ async fn run_formula_command(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let manager = match @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+  let manager = match
+    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
@@ -151,7 +150,8 @@ async fn run_reorder(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let manager = match @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+  let manager = match
+    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
@@ -180,17 +180,16 @@ async fn run_reorder(
 
 ///|
 fn reach_demo() -> Result[String, String] {
-  let manager = match @bdd.Manager::new(
-    ["p", "q", "p_next", "q_next"],
-    @bdd.ResourceBudget::default(),
-  ) {
+  let manager = match
+    @bdd.Manager::new(
+      ["p", "q", "p_next", "q_next"],
+      @bdd.ResourceBudget::default(),
+    ) {
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
-  let encoding = match manager.state_encoding(
-    ["p", "q"],
-    ["p_next", "q_next"],
-  ) {
+  let encoding = match
+    manager.state_encoding(["p", "q"], ["p_next", "q_next"]) {
     Ok(value) => value
     Err(error) => return Err(error_text(error))
   }
@@ -198,9 +197,10 @@ fn reach_demo() -> Result[String, String] {
     Ok(value) => value
     Err(error) => return Err(expression_error_text(error))
   }
-  let transition = match manager.compile(
-    "(!p & !q & ((!p_next & !q_next) | (p_next & !q_next) | (!p_next & q_next))) | (p & !q & ((!p_next & !q_next) | (p_next & !q_next))) | (!p & q & ((!p_next & !q_next) | (!p_next & q_next)))",
-  ) {
+  let transition = match
+    manager.compile(
+      "(!p & !q & ((!p_next & !q_next) | (p_next & !q_next) | (!p_next & q_next))) | (p & !q & ((!p_next & !q_next) | (p_next & !q_next))) | (!p & q & ((!p_next & !q_next) | (!p_next & q_next)))",
+    ) {
     Ok(value) => value
     Err(error) => return Err(expression_error_text(error))
   }
@@ -239,11 +239,12 @@ async fn main {
     reach_demo()
   } else if args[1] == "reorder" && args.length() == 5 {
     run_reorder(args[2], args[3], args[4])
-  } else if
-    (args[1] == "compile" ||
+  } else if (
+      args[1] == "compile" ||
       args[1] == "stats" ||
       args[1] == "sat-one" ||
-      args[1] == "count") &&
+      args[1] == "count"
+    ) &&
     args.length() == 4 {
     run_formula_command(args[1], args[2], args[3], "root")
   } else if args[1] == "dot" && (args.length() == 4 || args.length() == 5) {

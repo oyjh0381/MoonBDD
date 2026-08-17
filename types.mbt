@@ -95,7 +95,7 @@ priv struct WorkCounter {
 
 ///|
 fn WorkCounter::new(maximum : Int) -> WorkCounter {
-  { used: 0, maximum, }
+  { used: 0, maximum }
 }
 
 ///|

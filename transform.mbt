@@ -38,38 +38,18 @@ fn Manager::restrict_root(
   }
   let node = self.nodes[root]
   let result = match assignments.get(node.variable) {
-    Some(false) => self.restrict_root(
-      node.low,
-      assignments,
-      memo,
-      work,
-      depth + 1,
-    )
-    Some(true) => self.restrict_root(
-      node.high,
-      assignments,
-      memo,
-      work,
-      depth + 1,
-    )
+    Some(false) =>
+      self.restrict_root(node.low, assignments, memo, work, depth + 1)
+    Some(true) =>
+      self.restrict_root(node.high, assignments, memo, work, depth + 1)
     None => {
-      let low = match self.restrict_root(
-        node.low,
-        assignments,
-        memo,
-        work,
-        depth + 1,
-      ) {
+      let low = match
+        self.restrict_root(node.low, assignments, memo, work, depth + 1) {
         Ok(value) => value
         Err(error) => return Err(error)
       }
-      let high = match self.restrict_root(
-        node.high,
-        assignments,
-        memo,
-        work,
-        depth + 1,
-      ) {
+      let high = match
+        self.restrict_root(node.high, assignments, memo, work, depth + 1) {
         Ok(value) => value
         Err(error) => return Err(error)
       }
@@ -136,25 +116,13 @@ fn Manager::compose_root(
     None => ()
   }
   let node = self.nodes[root]
-  let low = match self.compose_root(
-    node.low,
-    target,
-    replacement,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let low = match
+    self.compose_root(node.low, target, replacement, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let high = match self.compose_root(
-    node.high,
-    target,
-    replacement,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.compose_root(node.high, target, replacement, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -224,25 +192,13 @@ fn Manager::quantify_root(
     None => ()
   }
   let node = self.nodes[root]
-  let low = match self.quantify_root(
-    node.low,
-    selected,
-    existential,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let low = match
+    self.quantify_root(node.low, selected, existential, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let high = match self.quantify_root(
-    node.high,
-    selected,
-    existential,
-    memo,
-    work,
-    depth + 1,
-  ) {
+  let high = match
+    self.quantify_root(node.high, selected, existential, memo, work, depth + 1) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
