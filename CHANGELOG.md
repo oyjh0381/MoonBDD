@@ -7,3 +7,6 @@
 - Added deterministic JSON v1, DOT, statistics, and canonical expressions.
 - Added non-destructive reordering and finite symbolic reachability.
 - Added Resource Budgets, Native CLI, examples, multi-target tests, and CI.
+- Added bounded Truth Tables, partial analysis, relation counterexamples,
+  disjoint satisfying Cubes, Backbones, and deterministic named Constraint Set
+  diagnosis.

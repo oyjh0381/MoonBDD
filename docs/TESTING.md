@@ -9,6 +9,7 @@ moon check --target all --deny-warn
 moon test --target all --deny-warn
 python tools/test_cli.py
 python tools/benchmark.py
+python tools/count_moonbit_loc.py
 moon info
 git diff --exit-code
 ```
@@ -17,6 +18,9 @@ Evidence includes independent truth tables, algebra laws, parser precedence,
 transformation identities, exact counts above UInt64, Model uniqueness,
 malformed JSON and parser mutations, all three-Variable reorder permutations,
 empty/singleton/budgeted reachability, invariant witnesses, and Resource Budget
+boundaries. Analysis tests additionally cover partial assignments, bounded
+Truth Tables, relation counterexamples, Backbones, redundant constraints, and
+disjoint Cube coverage, deletion-minimal conflicts, and their truncation/budget
 boundaries. Generated formulas use the explicit replay seed `20260817` in the
 test name and source. The benchmark records interleaved versus grouped
 equality-variable orders and rejects a loss of the expected node-count gap.

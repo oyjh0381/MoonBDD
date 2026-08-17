@@ -66,6 +66,12 @@ The portable core will target Wasm, Wasm-GC, JavaScript, and Native where suppor
 50. As an OSC 2026 reviewer, I want the project isolated from MoonOCI with its own repository history and package identity, so that its independent contribution is unambiguous.
 51. As a package consumer, I want mooncakes.io metadata and a reproducible release checklist, so that I can install a reviewed version.
 52. As the contestant, I want a concise project proposal matching the established MoonOCI proposal style, so that submission materials remain consistent and complete.
+53. As a configuration author, I want a bounded deterministic Truth Table, so that I can inspect small functions without accidentally enumerating an unbounded space.
+54. As a policy author, I want partial evaluation and Backbone discovery, so that I can distinguish settled outcomes and values forced by every valid configuration.
+55. As a reviewer, I want entailment, equivalence, and disjointness checks with counterexample Models, so that semantic differences are actionable.
+56. As a configuration maintainer, I want named Constraint Set diagnosis, so that satisfiable policies expose redundancy and inconsistent policies expose a deletion-minimal conflict.
+57. As a service operator, I want analysis row, constraint, and high-level step limits, so that diagnostic convenience APIs preserve the project's bounded-work policy.
+58. As a user inspecting a large solution space, I want bounded disjoint satisfying Cubes, so that don't-care dimensions are represented more compactly than complete Models.
 
 ## Implementation Decisions
 
@@ -84,13 +90,14 @@ The portable core will target Wasm, Wasm-GC, JavaScript, and Native where suppor
 - Transformations include Restriction, Composition, support discovery, existential Quantification, and universal Quantification.
 - Satisfiability capabilities include one Model, budgeted Model enumeration, UInt64 Model Count with overflow detection, and exact decimal Model Count backed by an internal non-negative big integer.
 - The parser accepts identifiers, `true`, `false`, `!`, `&`, `|`, `^`, `->`, `<->`, and parentheses with documented precedence and associativity.
-- Stable CLI command names are `compile`, `stats`, `sat-one`, `count`, `dot`, `reorder`, and `reach`.
+- Stable CLI command names are `compile`, `stats`, `sat-one`, `count`, `backbone`, `truth-table`, `cubes`, `diagnose`, `dot`, `reorder`, and `reach`.
+- Analysis includes partial evaluation, bounded Truth Tables, semantic relation counterexamples, Backbone discovery, and deterministic named Constraint diagnosis. Unsatisfiable conflicts are deletion-minimal, not promised to be minimum-cardinality.
 - The only persistent interoperability format in version 0.1 is deterministic, versioned JSON Schema v1. No stable binary format is promised.
 - JSON decoding validates schema version, Variable Order, canonical topology, node references, root references, and configured Resource Budgets before returning a usable artifact.
 - DOT output is deterministic and intended for inspection and external rendering, not as a persistence format.
 - Symbolic reachability represents states as Models, Transition Relations over paired current and next Variables, and successors through conjunction, Quantification, and renaming.
 - Reachability is bounded finite-state fixed-point analysis. When an invariant fails, the result should include a witness Model when one is available within the budget.
-- Resource Budgets are part of public construction, parsing, import, Model enumeration, reordering, and reachability contracts. Exhaustion is a structured error, never silent truncation.
+- Resource Budgets are part of public construction, parsing, import, Model/Truth Table enumeration, Constraint diagnosis, reordering, and reachability contracts. Exhaustion is a structured error, never silent truncation.
 - The portable library core must not depend on host files, clocks, randomness, processes, sockets, or threads. Native filesystem orchestration belongs to the CLI.
 - Public errors distinguish invalid arguments, ownership violations, parse diagnostics, malformed artifacts, unsupported versions, arithmetic overflow, budget exhaustion, and I/O or CLI failures.
 - The competition proposal follows the structure and concise style of the existing MoonOCI proposal and the official template. Contestant and contact fields remain explicit placeholders until supplied by the user.
@@ -104,6 +111,8 @@ The portable core will target Wasm, Wasm-GC, JavaScript, and Native where suppor
 - Algebraic properties cover commutativity, associativity where applicable, identity, annihilation, idempotence, complement, implication, equivalence, Shannon expansion, Restriction, Composition, and Quantification laws.
 - Canonicality tests verify that equivalent construction paths produce equal handles inside one Manager and that incompatible Managers are rejected.
 - Model tests cover unsatisfiable, tautological, fully constrained, partially constrained, skipped-variable, zero-variable, overflow, and exact large-count cases.
+- Analysis tests cover bounded/complete Truth Tables, zero-variable Managers, partial evaluation, semantic counterexamples, forced Backbone assignments, redundant constraints, deletion-minimal conflicts, and budget exhaustion.
+- Cube tests cover don't-care omission, pairwise-disjoint coverage, constants, deterministic ordering, truncation, and budget exhaustion.
 - Parser tests cover precedence, associativity, whitespace, Unicode or invalid identifiers according to the documented lexical policy, incomplete operators, unmatched parentheses, excessive depth, and precise diagnostics.
 - Serialization tests cover deterministic golden output, round trips, version rejection, topological violations, duplicate or dangling references, invalid orders, unreachable data policy, size limits, and mutation-generated malformed inputs.
 - Reordering tests compare truth tables before and after translation, ensure old handles remain usable, confirm deterministic results, and demonstrate at least one case with a smaller node count.

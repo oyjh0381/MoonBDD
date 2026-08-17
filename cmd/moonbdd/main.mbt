@@ -11,6 +11,10 @@ fn usage() -> String {
     #|  moonbdd stats    VARIABLES EXPRESSION
     #|  moonbdd sat-one  VARIABLES EXPRESSION
     #|  moonbdd count    VARIABLES EXPRESSION
+    #|  moonbdd backbone VARIABLES EXPRESSION
+    #|  moonbdd truth-table VARIABLES EXPRESSION [MAX_ROWS]
+    #|  moonbdd cubes VARIABLES EXPRESSION [MAX_CUBES]
+    #|  moonbdd diagnose VARIABLES NAME=EXPRESSION[;NAME=EXPRESSION...]
     #|  moonbdd dot      VARIABLES EXPRESSION [ROOT_NAME]
     #|  moonbdd reorder  VARIABLES NEW_ORDER EXPRESSION
     #|  moonbdd reach
@@ -79,6 +83,7 @@ fn classify_error(message : String) -> (String, Int) {
     ("io", 8)
   } else if message.contains("InvalidArgument") ||
     message.contains("InvalidVariable") ||
+    message.contains("ConstraintName") ||
     message.contains("DuplicateVariable") ||
     message.contains("UnknownVariable") ||
     message.contains("EmptyVariable") ||
@@ -119,6 +124,216 @@ fn model_json(model : @bdd.Model) -> String {
     fields.push(Json::string(name).stringify() + ":" + encoded_value)
   }
   "{" + fields.join(",") + "}"
+}
+
+///|
+fn string_array_json(values : Array[String]) -> String {
+  let encoded : Array[String] = []
+  for value in values {
+    encoded.push(Json::string(value).stringify())
+  }
+  "[" + encoded.join(",") + "]"
+}
+
+///|
+fn assignment_json(values : Array[(String, Bool)]) -> String {
+  model_json({ values, })
+}
+
+///|
+fn truth_table_json(table : @bdd.TruthTable) -> String {
+  let rows : Array[String] = []
+  for row in table.rows {
+    rows.push(
+      "{\"values\":" +
+      assignment_json(row.values) +
+      ",\"result\":" +
+      row.result.to_string() +
+      "}",
+    )
+  }
+  "{\"complete\":" +
+  table.complete.to_string() +
+  ",\"rows\":[" +
+  rows.join(",") +
+  "]}\n"
+}
+
+///|
+fn cube_enumeration_json(enumeration : @bdd.CubeEnumeration) -> String {
+  let cubes : Array[String] = []
+  for cube in enumeration.cubes {
+    cubes.push(assignment_json(cube.values))
+  }
+  "{\"complete\":" +
+  enumeration.complete.to_string() +
+  ",\"cubes\":[" +
+  cubes.join(",") +
+  "]}\n"
+}
+
+///|
+fn parse_maximum(text : String, label : String) -> Result[Int, String] {
+  let value = @string.parse_int(text) catch {
+    _ => return Err("InvalidArgument: " + label + " must be an integer")
+  }
+  if value <= 0 {
+    Err("InvalidArgument: " + label + " must be positive")
+  } else {
+    Ok(value)
+  }
+}
+
+///|
+fn bounded_cli_output(output : String) -> Result[String, String] {
+  let maximum = @bdd.ResourceBudget::default().max_output_bytes
+  if @utf8.encode(output).length() > maximum {
+    Err(error_text(@bdd.OutputBudgetExceeded(maximum)))
+  } else {
+    Ok(output)
+  }
+}
+
+///|
+fn parse_named_constraints(
+  text : String,
+) -> Result[Array[@bdd.NamedConstraint], String] {
+  if text == "" {
+    return Ok([])
+  }
+  let constraints : Array[@bdd.NamedConstraint] = []
+  for part in text.split(";") {
+    let item = part.to_owned()
+    let data = @utf8.encode(item)
+    let mut separator = -1
+    for index = 0; index < data.length(); index = index + 1 {
+      if data[index] == b'=' {
+        separator = index
+        break
+      }
+    }
+    if separator <= 0 || separator == data.length() - 1 {
+      return Err("InvalidArgument: each constraint must be NAME=EXPRESSION")
+    }
+    let name = @utf8.decode(data[0:separator]) catch {
+      _ => return Err("InvalidArgument: constraint name is not UTF-8")
+    }
+    let expression = @utf8.decode(data[separator + 1:]) catch {
+      _ => return Err("InvalidArgument: constraint expression is not UTF-8")
+    }
+    constraints.push({ name, expression })
+  }
+  Ok(constraints)
+}
+
+///|
+async fn run_truth_table(
+  variables_text : String,
+  expression_argument : String,
+  maximum_text : String,
+) -> Result[String, String] {
+  let variables = match split_names(variables_text) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let maximum = match parse_maximum(maximum_text, "MAX_ROWS") {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let manager = match
+    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+    Ok(value) => value
+    Err(error) => return Err(error_text(error))
+  }
+  let source = match expression_input(expression_argument) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let value = match manager.compile(source) {
+    Ok(value) => value
+    Err(error) => return Err(expression_error_text(error))
+  }
+  match manager.truth_table(value, maximum) {
+    Ok(table) => bounded_cli_output(truth_table_json(table))
+    Err(error) => Err(error_text(error))
+  }
+}
+
+///|
+async fn run_cubes(
+  variables_text : String,
+  expression_argument : String,
+  maximum_text : String,
+) -> Result[String, String] {
+  let variables = match split_names(variables_text) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let maximum = match parse_maximum(maximum_text, "MAX_CUBES") {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let manager = match
+    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+    Ok(value) => value
+    Err(error) => return Err(error_text(error))
+  }
+  let source = match expression_input(expression_argument) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let value = match manager.compile(source) {
+    Ok(value) => value
+    Err(error) => return Err(expression_error_text(error))
+  }
+  match manager.enumerate_cubes(value, maximum) {
+    Ok(enumeration) => bounded_cli_output(cube_enumeration_json(enumeration))
+    Err(error) => Err(error_text(error))
+  }
+}
+
+///|
+async fn run_diagnose(
+  variables_text : String,
+  constraints_argument : String,
+) -> Result[String, String] {
+  let variables = match split_names(variables_text) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let source = match expression_input(constraints_argument) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let constraints = match parse_named_constraints(source) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let manager = match
+    @bdd.Manager::new(variables, @bdd.ResourceBudget::default()) {
+    Ok(value) => value
+    Err(error) => return Err(error_text(error))
+  }
+  match manager.diagnose_constraints(constraints) {
+    Err(error) => Err(@debug.to_string(error))
+    Ok(report) => {
+      let witness = match report.witness {
+        None => "null"
+        Some(model) => model_json(model)
+      }
+      bounded_cli_output(
+        "{\"satisfiable\":" +
+        report.satisfiable.to_string() +
+        ",\"witness\":" +
+        witness +
+        ",\"minimal_conflict\":" +
+        string_array_json(report.minimal_conflict) +
+        ",\"redundant\":" +
+        string_array_json(report.redundant) +
+        "}\n",
+      )
+    }
+  }
 }
 
 ///|
@@ -178,6 +393,11 @@ async fn run_formula_command(
     "count" =>
       match manager.sat_count_decimal(value) {
         Ok(count) => Ok(count + "\n")
+        Err(error) => Err(error_text(error))
+      }
+    "backbone" =>
+      match manager.backbone(value) {
+        Ok(assignments) => Ok(assignment_json(assignments) + "\n")
         Err(error) => Err(error_text(error))
       }
     "dot" =>
@@ -296,11 +516,21 @@ async fn main {
     reach_demo()
   } else if args[1] == "reorder" && args.length() == 5 {
     run_reorder(args[2], args[3], args[4])
+  } else if args[1] == "truth-table" &&
+    (args.length() == 4 || args.length() == 5) {
+    let maximum = if args.length() == 5 { args[4] } else { "16" }
+    run_truth_table(args[2], args[3], maximum)
+  } else if args[1] == "cubes" && (args.length() == 4 || args.length() == 5) {
+    let maximum = if args.length() == 5 { args[4] } else { "16" }
+    run_cubes(args[2], args[3], maximum)
+  } else if args[1] == "diagnose" && args.length() == 4 {
+    run_diagnose(args[2], args[3])
   } else if (
       args[1] == "compile" ||
       args[1] == "stats" ||
       args[1] == "sat-one" ||
-      args[1] == "count"
+      args[1] == "count" ||
+      args[1] == "backbone"
     ) &&
     args.length() == 4 {
     run_formula_command(args[1], args[2], args[3], "root")

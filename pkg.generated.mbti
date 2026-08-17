@@ -30,6 +30,8 @@ pub(all) enum BddError {
   InputBudgetExceeded(Int)
   DepthBudgetExceeded(Int)
   ModelBudgetExceeded(Int)
+  ConstraintBudgetExceeded(Int)
+  AnalysisBudgetExceeded(Int)
   OutputBudgetExceeded(Int)
   IterationBudgetExceeded(Int)
   ArithmeticOverflow
@@ -46,6 +48,30 @@ pub(all) struct BddStatistics {
   model_count_decimal : String
 } derive(Eq, @debug.Debug)
 
+pub(all) enum ConstraintError {
+  EmptyConstraintName
+  DuplicateConstraintName(String)
+  ConstraintCompileFailure(String, ExpressionError)
+  ConstraintAnalysisFailure(BddError)
+} derive(Eq, @debug.Debug)
+
+pub struct ConstraintReport {
+  combined : Bdd
+  satisfiable : Bool
+  witness : Model?
+  minimal_conflict : Array[String]
+  redundant : Array[String]
+}
+
+pub(all) struct Cube {
+  values : Array[(String, Bool)]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CubeEnumeration {
+  cubes : Array[Cube]
+  complete : Bool
+} derive(Eq, @debug.Debug)
+
 type DecisionNode derive(Eq, @debug.Debug)
 
 pub(all) enum ExpressionError {
@@ -60,14 +86,22 @@ pub struct Manager {
   // private fields
 }
 pub fn Manager::and_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::backbone(Self, Bdd) -> Result[Array[(String, Bool)], BddError]
 pub fn Manager::canonical_expression(Self, Bdd) -> Result[String, BddError]
+pub fn Manager::check_disjoint(Self, Bdd, Bdd) -> Result[RelationCheck, BddError]
+pub fn Manager::check_entailment(Self, Bdd, Bdd) -> Result[RelationCheck, BddError]
+pub fn Manager::check_equivalence(Self, Bdd, Bdd) -> Result[RelationCheck, BddError]
 pub fn Manager::compile(Self, String) -> Result[Bdd, ExpressionError]
 pub fn Manager::compose(Self, Bdd, String, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::cube_to_bdd(Self, Cube) -> Result[Bdd, BddError]
 pub fn Manager::decode_json(String, ResourceBudget) -> Result[(Self, Bdd), BddError]
+pub fn Manager::diagnose_constraints(Self, Array[NamedConstraint]) -> Result[ConstraintReport, ConstraintError]
 pub fn Manager::encode_json(Self, Bdd) -> Result[String, BddError]
+pub fn Manager::enumerate_cubes(Self, Bdd, Int) -> Result[CubeEnumeration, BddError]
 pub fn Manager::enumerate_models(Self, Bdd, Int) -> Result[ModelEnumeration, BddError]
 pub fn Manager::equivalent(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::evaluate(Self, Bdd, Array[(String, Bool)]) -> Result[Bool, BddError]
+pub fn Manager::evaluate_partial(Self, Bdd, Array[(String, Bool)]) -> Result[PartialValue, BddError]
 pub fn Manager::exists(Self, Bdd, Array[String]) -> Result[Bdd, BddError]
 pub fn Manager::false_bdd(Self) -> Bdd
 pub fn Manager::forall(Self, Bdd, Array[String]) -> Result[Bdd, BddError]
@@ -93,6 +127,7 @@ pub fn Manager::statistics(Self, Bdd) -> Result[BddStatistics, BddError]
 pub fn Manager::support(Self, Bdd) -> Result[Array[String], BddError]
 pub fn Manager::to_dot(Self, Bdd, String) -> Result[String, BddError]
 pub fn Manager::true_bdd(Self) -> Bdd
+pub fn Manager::truth_table(Self, Bdd, Int) -> Result[TruthTable, BddError]
 pub fn Manager::validate(Self, Bdd) -> Result[Unit, BddError]
 pub fn Manager::variable(Self, String) -> Result[Bdd, BddError]
 pub fn Manager::variable_count(Self) -> Int
@@ -108,11 +143,22 @@ pub(all) struct ModelEnumeration {
   complete : Bool
 } derive(Eq, @debug.Debug)
 
+pub(all) struct NamedConstraint {
+  name : String
+  expression : String
+} derive(Eq, @debug.Debug)
+
 type NodeKey derive(Eq, Hash)
 
 pub(all) struct ParseDiagnostic {
   offset : Int
   message : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PartialValue {
+  AlwaysFalse
+  AlwaysTrue
+  Undetermined
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ReachabilityResult {
@@ -122,6 +168,11 @@ pub(all) struct ReachabilityResult {
   invariant_holds : Bool
   witness : Model?
 }
+
+pub(all) struct RelationCheck {
+  holds : Bool
+  witness : Model?
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ReorderResult {
   manager : Manager
@@ -138,6 +189,8 @@ pub(all) struct ResourceBudget {
   max_input_bytes : Int
   max_depth : Int
   max_models : Int
+  max_constraints : Int
+  max_analysis_steps : Int
   max_output_bytes : Int
   max_reorder_attempts : Int
   max_iterations : Int
@@ -151,6 +204,16 @@ pub struct StateEncoding {
 }
 pub fn StateEncoding::current_variables(Self) -> Array[String]
 pub fn StateEncoding::next_variables(Self) -> Array[String]
+
+pub(all) struct TruthRow {
+  values : Array[(String, Bool)]
+  result : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TruthTable {
+  rows : Array[TruthRow]
+  complete : Bool
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

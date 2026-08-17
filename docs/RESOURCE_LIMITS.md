@@ -1,8 +1,9 @@
 # Resource Limits
 
 `ResourceBudget` limits retained nodes, ITE cache entries, operation work,
-input bytes, recursion depth, Model enumeration, output bytes, reorder
-attempts, and reachability iterations. Defaults are finite demonstration
+input bytes, recursion depth, Model/Truth Table enumeration, named constraints,
+high-level analysis steps, output bytes, reorder attempts, and reachability
+iterations. Defaults are finite demonstration
 defaults, not universal service settings. A full ITE cache stops accepting new
 entries while computation continues correctly; it is an optimisation bound,
 not a semantic truncation.

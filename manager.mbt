@@ -7,6 +7,8 @@ fn validate_budget(budget : ResourceBudget) -> Result[Unit, BddError] {
     ("max_input_bytes", budget.max_input_bytes),
     ("max_depth", budget.max_depth),
     ("max_models", budget.max_models),
+    ("max_constraints", budget.max_constraints),
+    ("max_analysis_steps", budget.max_analysis_steps),
     ("max_output_bytes", budget.max_output_bytes),
     ("max_reorder_attempts", budget.max_reorder_attempts),
     ("max_iterations", budget.max_iterations),

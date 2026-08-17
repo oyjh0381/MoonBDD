@@ -5,6 +5,14 @@ Run `moon run cmd/moonbdd --target native -- ...`. Commands are `compile`,
 accept a comma-separated Variable Order and expression. `reorder` also accepts
 a new order. `reach` runs the deterministic mutual-exclusion demonstration.
 
+Analysis commands are `backbone`, `truth-table`, `cubes`, and `diagnose`.
+`truth-table VARIABLES EXPRESSION [MAX_ROWS]` defaults to 16 rows. `diagnose`
+accepts `NAME=EXPRESSION` entries separated by semicolons; quote the complete
+argument in the shell. It reports a witness and redundant entries for a
+satisfiable set, or a deletion-minimal conflict for an unsatisfiable set.
+`cubes VARIABLES EXPRESSION [MAX_CUBES]` emits low-before-high, pairwise-
+disjoint satisfying partial assignments and also defaults to 16 results.
+
 Use `-` as the expression to read UTF-8 stdin, or `@PATH` to read one explicit
 UTF-8 file. A literal expression beginning with `@` is outside the expression
 grammar and therefore unambiguous. Success writes JSON, decimal, or DOT to

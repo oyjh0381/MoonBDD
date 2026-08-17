@@ -22,6 +22,9 @@ canonically; it is not a workflow runtime or a general CTL/LTL model checker.
 - Restriction, Composition, support, existential and universal Quantification.
 - One Model, bounded Model enumeration, overflow-checked UInt64 Model Count,
   and exact decimal Model Count backed by an internal non-negative big integer.
+- Bounded Truth Tables, compact disjoint satisfying Cubes, partial evaluation,
+  semantic relation witnesses, Backbone discovery, and named Constraint
+  diagnosis with redundant policies or deletion-minimal conflicts.
 - Deterministic JSON Schema v1, deterministic DOT, statistics, and canonical
   parser-compatible Shannon expressions.
 - Non-destructive explicit and adjacent-window Variable reordering: old
@@ -65,6 +68,10 @@ the source Manager.
 ```sh
 moon run cmd/moonbdd --target native -- stats a,b "a & b"
 moon run cmd/moonbdd --target native -- count a,b "a | b"
+moon run cmd/moonbdd --target native -- truth-table a,b "a ^ b" 4
+moon run cmd/moonbdd --target native -- cubes a,b,c "(a & b) | (!a & c)" 8
+moon run cmd/moonbdd --target native -- backbone a,b,c "a & !b"
+moon run cmd/moonbdd --target native -- diagnose a,b,c "enable-a=a;needs-b=!a | b;disable-b=!b"
 moon run cmd/moonbdd --target native -- sat-one a,b "a ^ b"
 moon run cmd/moonbdd --target native -- compile a,b "a -> b"
 moon run cmd/moonbdd --target native -- dot a,b "a & b" constraint

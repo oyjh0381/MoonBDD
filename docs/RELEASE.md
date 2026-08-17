@@ -8,9 +8,9 @@ version recorded in the release notes.
 2. Run `moon update`, `moon fmt --check`, `moon info`,
    `moon check --target all --deny-warn`, and
    `moon test --target all --deny-warn`.
-3. Run `python tools/test_cli.py`, `python tools/benchmark.py`, and all three
-   documented examples. Confirm `git diff --exit-code` and `git status` are
-   clean afterward.
+3. Run `python tools/test_cli.py`, `python tools/benchmark.py`,
+   `python tools/count_moonbit_loc.py`, and all three documented examples.
+   Confirm `git diff --exit-code` and `git status` are clean afterward.
 4. Run `moon publish --dry-run`; inspect the package file list and generated
    interface. Confirm Apache-2.0 provenance and third-party notices.
 5. Push the signed or annotated version tag, let the multi-target GitHub Actions

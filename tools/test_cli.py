@@ -58,6 +58,40 @@ def main() -> int:
     require(reach.returncode == 0, reach.stderr)
     require(json.loads(reach.stdout)["invariant_holds"] is True, reach.stdout)
 
+    table = run("truth-table", "a,b", "a ^ b", "3")
+    require(table.returncode == 0, table.stderr)
+    table_payload = json.loads(table.stdout)
+    require(table_payload["complete"] is False, table.stdout)
+    require(len(table_payload["rows"]) == 3, table.stdout)
+
+    cubes = run("cubes", "a,b,c", "(a & b) | (!a & c)", "8")
+    require(cubes.returncode == 0, cubes.stderr)
+    cubes_payload = json.loads(cubes.stdout)
+    require(cubes_payload["complete"] is True, cubes.stdout)
+    require(
+        cubes_payload["cubes"]
+        == [{"a": False, "c": True}, {"a": True, "b": True}],
+        cubes.stdout,
+    )
+
+    backbone = run("backbone", "a,b,c", "a & !b")
+    require(backbone.returncode == 0, backbone.stderr)
+    require(json.loads(backbone.stdout) == {"a": True, "b": False}, backbone.stdout)
+
+    diagnosis = run(
+        "diagnose",
+        "a,b,c",
+        "enable-a=a;a-needs-b=!a | b;disable-b=!b;irrelevant=c | !c",
+    )
+    require(diagnosis.returncode == 0, diagnosis.stderr)
+    diagnosis_payload = json.loads(diagnosis.stdout)
+    require(diagnosis_payload["satisfiable"] is False, diagnosis.stdout)
+    require(
+        diagnosis_payload["minimal_conflict"]
+        == ["enable-a", "a-needs-b", "disable-b"],
+        diagnosis.stdout,
+    )
+
     malformed = run("count", "a", "a & )")
     require(malformed.returncode == 3, malformed.stderr)
     malformed_error = json.loads(malformed.stderr.removeprefix("MOONBDD_ERROR "))
@@ -77,7 +111,7 @@ def main() -> int:
     require(usage.returncode == 2, usage.stderr)
     usage_error = json.loads(usage.stderr.removeprefix("MOONBDD_ERROR "))
     require(usage_error["code"] == "usage", usage.stderr)
-    print("CLI contract: 10 scenarios passed")
+    print("CLI contract: 14 scenarios passed")
     return 0
 
 

@@ -8,6 +8,8 @@ pub(all) struct ResourceBudget {
   max_input_bytes : Int
   max_depth : Int
   max_models : Int
+  max_constraints : Int
+  max_analysis_steps : Int
   max_output_bytes : Int
   max_reorder_attempts : Int
   max_iterations : Int
@@ -22,6 +24,8 @@ pub fn ResourceBudget::default() -> ResourceBudget {
     max_input_bytes: 1048576,
     max_depth: 1024,
     max_models: 10000,
+    max_constraints: 256,
+    max_analysis_steps: 10000,
     max_output_bytes: 8388608,
     max_reorder_attempts: 256,
     max_iterations: 10000,
@@ -43,6 +47,8 @@ pub(all) enum BddError {
   InputBudgetExceeded(Int)
   DepthBudgetExceeded(Int)
   ModelBudgetExceeded(Int)
+  ConstraintBudgetExceeded(Int)
+  AnalysisBudgetExceeded(Int)
   OutputBudgetExceeded(Int)
   IterationBudgetExceeded(Int)
   ArithmeticOverflow
