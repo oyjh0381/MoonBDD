@@ -1,0 +1,156 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "oyjh0381/moonbdd"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/hashmap",
+}
+
+// Values
+pub let artifact_schema_version : Int
+
+// Errors
+
+// Types and methods
+pub struct Bdd {
+  owner : Manager
+  root : Int
+}
+pub fn Bdd::root_id(Self) -> Int
+pub fn Bdd::same(Self, Self) -> Bool
+
+pub(all) enum BddError {
+  InvalidBudget(String, Int)
+  EmptyVariable
+  DuplicateVariable(String)
+  UnknownVariable(String)
+  ForeignHandle
+  NodeBudgetExceeded(Int)
+  WorkBudgetExceeded(Int)
+  InputBudgetExceeded(Int)
+  DepthBudgetExceeded(Int)
+  ModelBudgetExceeded(Int)
+  OutputBudgetExceeded(Int)
+  IterationBudgetExceeded(Int)
+  ArithmeticOverflow
+  InvalidArgument(String)
+  InvalidArtifact(String)
+  UnsupportedVersion(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct BddStatistics {
+  declared_variables : Int
+  support_variables : Int
+  reachable_nodes : Int
+  retained_nodes : Int
+  model_count_decimal : String
+} derive(Eq, @debug.Debug)
+
+type DecisionNode derive(Eq, @debug.Debug)
+
+pub(all) enum ExpressionError {
+  ParseFailure(ParseDiagnostic)
+  CompileFailure(BddError)
+} derive(Eq, @debug.Debug)
+
+pub struct Manager {
+  variables : Array[String]
+  variable_index : @hashmap.HashMap[String, Int]
+  budget : ResourceBudget
+  // private fields
+}
+pub fn Manager::and_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::canonical_expression(Self, Bdd) -> Result[String, BddError]
+pub fn Manager::compile(Self, String) -> Result[Bdd, ExpressionError]
+pub fn Manager::compose(Self, Bdd, String, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::decode_json(String, ResourceBudget) -> Result[(Self, Bdd), BddError]
+pub fn Manager::encode_json(Self, Bdd) -> Result[String, BddError]
+pub fn Manager::enumerate_models(Self, Bdd, Int) -> Result[ModelEnumeration, BddError]
+pub fn Manager::equivalent(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::evaluate(Self, Bdd, Array[(String, Bool)]) -> Result[Bool, BddError]
+pub fn Manager::exists(Self, Bdd, Array[String]) -> Result[Bdd, BddError]
+pub fn Manager::false_bdd(Self) -> Bdd
+pub fn Manager::forall(Self, Bdd, Array[String]) -> Result[Bdd, BddError]
+pub fn Manager::implies(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::is_false(Self, Bdd) -> Bool
+pub fn Manager::is_terminal(Self, Bdd) -> Bool
+pub fn Manager::is_true(Self, Bdd) -> Bool
+pub fn Manager::ite(Self, Bdd, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::new(Array[String], ResourceBudget) -> Result[Self, BddError]
+pub fn Manager::not_bdd(Self, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::optimize_order(Self, Bdd) -> Result[ReorderResult, BddError]
+pub fn Manager::or_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+pub fn Manager::reach(Self, Bdd, Bdd, StateEncoding, Bdd?) -> Result[ReachabilityResult, BddError]
+pub fn Manager::reachable_node_count(Self, Bdd) -> Int
+pub fn Manager::reorder(Self, Bdd, Array[String]) -> Result[ReorderResult, BddError]
+pub fn Manager::restrict(Self, Bdd, Array[(String, Bool)]) -> Result[Bdd, BddError]
+pub fn Manager::retained_node_count(Self) -> Int
+pub fn Manager::sat_count_decimal(Self, Bdd) -> Result[String, BddError]
+pub fn Manager::sat_count_u64(Self, Bdd) -> Result[UInt64, BddError]
+pub fn Manager::sat_one(Self, Bdd) -> Result[Model?, BddError]
+pub fn Manager::state_encoding(Self, Array[String], Array[String]) -> Result[StateEncoding, BddError]
+pub fn Manager::statistics(Self, Bdd) -> Result[BddStatistics, BddError]
+pub fn Manager::support(Self, Bdd) -> Result[Array[String], BddError]
+pub fn Manager::to_dot(Self, Bdd, String) -> Result[String, BddError]
+pub fn Manager::true_bdd(Self) -> Bdd
+pub fn Manager::validate(Self, Bdd) -> Result[Unit, BddError]
+pub fn Manager::variable(Self, String) -> Result[Bdd, BddError]
+pub fn Manager::variable_count(Self) -> Int
+pub fn Manager::variable_names(Self) -> Array[String]
+pub fn Manager::xor_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
+
+pub(all) struct Model {
+  values : Array[(String, Bool)]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ModelEnumeration {
+  models : Array[Model]
+  complete : Bool
+} derive(Eq, @debug.Debug)
+
+type NodeKey derive(Eq, Hash)
+
+pub(all) struct ParseDiagnostic {
+  offset : Int
+  message : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ReachabilityResult {
+  reachable : Bdd
+  iterations : Int
+  fixed_point : Bool
+  invariant_holds : Bool
+  witness : Model?
+}
+
+pub(all) struct ReorderResult {
+  manager : Manager
+  root : Bdd
+  before_nodes : Int
+  after_nodes : Int
+  attempted_orders : Int
+}
+
+pub(all) struct ResourceBudget {
+  max_nodes : Int
+  max_work : Int
+  max_input_bytes : Int
+  max_depth : Int
+  max_models : Int
+  max_output_bytes : Int
+  max_reorder_attempts : Int
+  max_iterations : Int
+} derive(Eq, @debug.Debug)
+pub fn ResourceBudget::default() -> Self
+
+pub struct StateEncoding {
+  owner : Manager
+  current : Array[String]
+  next : Array[String]
+}
+pub fn StateEncoding::current_variables(Self) -> Array[String]
+pub fn StateEncoding::next_variables(Self) -> Array[String]
+
+// Type aliases
+
+// Traits
