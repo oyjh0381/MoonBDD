@@ -334,3 +334,43 @@ test "state encoding validates disjoint complete variable pairs" {
     manager.state_encoding(["x"], ["x"]) is Err(InvalidArgument(_)),
   )
 }
+
+///|
+test "Resource Budgets reject work before unsafe growth" {
+  let node_budget = {
+    ..@moonbdd.ResourceBudget::default(),
+    max_nodes: 2,
+  }
+  let node_manager = @moonbdd.Manager::new(["a"], node_budget).unwrap()
+  assert_true(node_manager.variable("a") is Err(NodeBudgetExceeded(2)))
+  let input_budget = {
+    ..@moonbdd.ResourceBudget::default(),
+    max_input_bytes: 3,
+  }
+  let input_manager = @moonbdd.Manager::new(["abcd"], input_budget).unwrap()
+  assert_true(
+    input_manager.compile("abcd") is
+    Err(CompileFailure(InputBudgetExceeded(3))),
+  )
+  let model_budget = {
+    ..@moonbdd.ResourceBudget::default(),
+    max_models: 1,
+  }
+  let model_manager = @moonbdd.Manager::new(["a"], model_budget).unwrap()
+  assert_true(
+    model_manager.enumerate_models(model_manager.true_bdd(), 2) is
+    Err(ModelBudgetExceeded(1)),
+  )
+}
+
+///|
+test "failed bounded operations preserve existing BDD Handles" {
+  let budget = {
+    ..@moonbdd.ResourceBudget::default(),
+    max_output_bytes: 16,
+  }
+  let manager = @moonbdd.Manager::new(["a"], budget).unwrap()
+  let a = manager.variable("a").unwrap()
+  assert_true(manager.encode_json(a) is Err(OutputBudgetExceeded(16)))
+  assert_eq(manager.evaluate(a, [("a", true)]), Ok(true))
+}
