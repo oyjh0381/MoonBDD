@@ -2,8 +2,8 @@
 fn Manager::validated_variable_set(
   self : Manager,
   names : Array[String],
-) -> Result[@hashmap.HashMap[Int, Unit], BddError] {
-  let result : @hashmap.HashMap[Int, Unit] = @hashmap.HashMap([])
+) -> Result[@hashmap.HashMap[Int32, Unit], BddError] {
+  let result : @hashmap.HashMap[Int32, Unit] = @hashmap.HashMap([])
   for name in names {
     match self.variable_index.get(name) {
       None => return Err(UnknownVariable(name))
@@ -16,12 +16,12 @@ fn Manager::validated_variable_set(
 ///|
 fn Manager::restrict_root(
   self : Manager,
-  root : Int,
-  assignments : @hashmap.HashMap[Int, Bool],
-  memo : @hashmap.HashMap[Int, Int],
+  root : Int32,
+  assignments : @hashmap.HashMap[Int32, Bool],
+  memo : @hashmap.HashMap[Int32, Int32],
   work : WorkCounter,
-  depth : Int,
-) -> Result[Int, BddError] {
+  depth : Int32,
+) -> Result[Int32, BddError] {
   if root <= 1 {
     return Ok(root)
   }
@@ -75,7 +75,7 @@ pub fn Manager::restrict(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let selected : @hashmap.HashMap[Int, Bool] = @hashmap.HashMap([])
+  let selected : @hashmap.HashMap[Int32, Bool] = @hashmap.HashMap([])
   for pair in assignments {
     let (name, choice) = pair
     match self.variable_index.get(name) {
@@ -83,10 +83,10 @@ pub fn Manager::restrict(
       Some(variable) => selected.set(variable, choice)
     }
   }
-  let memo : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([])
+  let memo : @hashmap.HashMap[Int32, Int32] = @hashmap.HashMap([])
   let work = WorkCounter::new(self.budget.max_work)
   match self.restrict_root(value.root, selected, memo, work, 0) {
-    Ok(root) => Ok({ owner: self, root })
+    Ok(root) => Ok({ owner: self, root, })
     Err(error) => Err(error)
   }
 }
@@ -94,13 +94,13 @@ pub fn Manager::restrict(
 ///|
 fn Manager::compose_root(
   self : Manager,
-  root : Int,
-  target : Int,
-  replacement : Int,
-  memo : @hashmap.HashMap[Int, Int],
+  root : Int32,
+  target : Int32,
+  replacement : Int32,
+  memo : @hashmap.HashMap[Int32, Int32],
   work : WorkCounter,
-  depth : Int,
-) -> Result[Int, BddError] {
+  depth : Int32,
+) -> Result[Int32, BddError] {
   if root <= 1 {
     return Ok(root)
   }
@@ -159,10 +159,10 @@ pub fn Manager::compose(
     None => return Err(UnknownVariable(variable_name))
     Some(variable) => variable
   }
-  let memo : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([])
+  let memo : @hashmap.HashMap[Int32, Int32] = @hashmap.HashMap([])
   let work = WorkCounter::new(self.budget.max_work)
   match self.compose_root(value.root, target, replacement.root, memo, work, 0) {
-    Ok(root) => Ok({ owner: self, root })
+    Ok(root) => Ok({ owner: self, root, })
     Err(error) => Err(error)
   }
 }
@@ -170,13 +170,13 @@ pub fn Manager::compose(
 ///|
 fn Manager::quantify_root(
   self : Manager,
-  root : Int,
-  selected : @hashmap.HashMap[Int, Unit],
+  root : Int32,
+  selected : @hashmap.HashMap[Int32, Unit],
   existential : Bool,
-  memo : @hashmap.HashMap[Int, Int],
+  memo : @hashmap.HashMap[Int32, Int32],
   work : WorkCounter,
-  depth : Int,
-) -> Result[Int, BddError] {
+  depth : Int32,
+) -> Result[Int32, BddError] {
   if root <= 1 {
     return Ok(root)
   }
@@ -235,10 +235,10 @@ fn Manager::quantify(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let memo : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([])
+  let memo : @hashmap.HashMap[Int32, Int32] = @hashmap.HashMap([])
   let work = WorkCounter::new(self.budget.max_work)
   match self.quantify_root(value.root, selected, existential, memo, work, 0) {
-    Ok(root) => Ok({ owner: self, root })
+    Ok(root) => Ok({ owner: self, root, })
     Err(error) => Err(error)
   }
 }
@@ -270,8 +270,8 @@ pub fn Manager::support(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let seen_nodes : @hashmap.HashMap[Int, Unit] = @hashmap.HashMap([])
-  let seen_variables : @hashmap.HashMap[Int, Unit] = @hashmap.HashMap([])
+  let seen_nodes : @hashmap.HashMap[Int32, Unit] = @hashmap.HashMap([])
+  let seen_variables : @hashmap.HashMap[Int32, Unit] = @hashmap.HashMap([])
   let pending = [value.root]
   let mut work = 0
   while pending.length() > 0 {

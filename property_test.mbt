@@ -216,7 +216,7 @@ test "reorder translation preserves all assignments for every permutation" {
 
 ///|
 test "public operations preserve source Handles after bounded failures" {
-  let tiny = { ..@moonbdd.ResourceBudget::default(), max_work: 2 }
+  let tiny = { ..@moonbdd.ResourceBudget::default(), max_work: 2, }
   let manager = @moonbdd.Manager::new(["a", "b"], tiny).unwrap()
   let a = manager.variable("a").unwrap()
   let b = manager.variable("b").unwrap()

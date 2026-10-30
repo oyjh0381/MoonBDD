@@ -3,9 +3,9 @@
 pub(all) struct ReorderResult {
   manager : Manager
   root : Bdd
-  before_nodes : Int
-  after_nodes : Int
-  attempted_orders : Int
+  before_nodes : Int32
+  after_nodes : Int32
+  attempted_orders : Int32
 }
 
 ///|
@@ -32,12 +32,12 @@ fn Manager::validate_permutation(
 ///|
 fn Manager::translate_root(
   self : Manager,
-  root : Int,
+  root : Int32,
   target : Manager,
-  memo : @hashmap.HashMap[Int, Int],
+  memo : @hashmap.HashMap[Int32, Int32],
   work : WorkCounter,
-  depth : Int,
-) -> Result[Int, BddError] {
+  depth : Int32,
+) -> Result[Int32, BddError] {
   if root <= 1 {
     return Ok(root)
   }
@@ -67,7 +67,7 @@ fn Manager::translate_root(
     Err(error) => return Err(error)
   }
   let translated = match
-    target.ite(selector, { owner: target, root: high }, {
+    target.ite(selector, { owner: target, root: high, }, {
       owner: target,
       root: low,
     }) {
@@ -107,7 +107,7 @@ pub fn Manager::reorder(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let root : Bdd = { owner: target, root: translated }
+  let root : Bdd = { owner: target, root: translated, }
   let before_nodes = match self.reachable_node_count(value) {
     Ok(value) => value
     Err(error) => return Err(error)
@@ -116,7 +116,7 @@ pub fn Manager::reorder(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  Ok({ manager: target, root, before_nodes, after_nodes, attempted_orders: 1 })
+  Ok({ manager: target, root, before_nodes, after_nodes, attempted_orders: 1, })
 }
 
 ///|

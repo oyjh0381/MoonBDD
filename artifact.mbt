@@ -1,5 +1,5 @@
 ///|
-pub let artifact_schema_version : Int = 1
+pub let artifact_schema_version : Int32 = 1
 
 ///|
 fn json_quote(value : String) -> String {
@@ -9,11 +9,11 @@ fn json_quote(value : String) -> String {
 ///|
 fn Manager::postorder_visit(
   self : Manager,
-  root : Int,
-  seen : @hashmap.HashMap[Int, Unit],
-  ordered : Array[Int],
+  root : Int32,
+  seen : @hashmap.HashMap[Int32, Unit],
+  ordered : Array[Int32],
   work : WorkCounter,
-  depth : Int,
+  depth : Int32,
 ) -> Result[Unit, BddError] {
   if root <= 1 || seen.get(root) is Some(_) {
     return Ok(())
@@ -50,7 +50,7 @@ pub fn Manager::encode_json(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let ordered : Array[Int] = []
+  let ordered : Array[Int32] = []
   match
     self.postorder_visit(
       value.root,
@@ -62,7 +62,7 @@ pub fn Manager::encode_json(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let remap : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([(0, 0), (1, 1)])
+  let remap : @hashmap.HashMap[Int32, Int32] = @hashmap.HashMap([(0, 0), (1, 1)])
   for index, old_id in ordered {
     remap.set(old_id, index + 2)
   }
@@ -127,12 +127,15 @@ fn json_required(
 }
 
 ///|
-fn json_int(fields : Map[String, Json], name : String) -> Result[Int, BddError] {
+fn json_int(
+  fields : Map[String, Json],
+  name : String,
+) -> Result[Int32, BddError] {
   let value = match json_required(fields, name) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let decoded : Int = @json.from_json(value) catch {
+  let decoded : Int32 = @json.from_json(value) catch {
     _ => return Err(InvalidArtifact(name + " must be an integer"))
   }
   Ok(decoded)
@@ -254,5 +257,5 @@ pub fn Manager::decode_json(
   if root < 0 || root >= manager.nodes.length() {
     return Err(InvalidArtifact("root does not reference a node"))
   }
-  Ok((manager, { owner: manager, root }))
+  Ok((manager, { owner: manager, root, }))
 }

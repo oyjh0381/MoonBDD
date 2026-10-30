@@ -7,46 +7,52 @@ import {
 }
 
 // Values
-pub let artifact_schema_version : Int
+pub let artifact_schema_version : Int32
 
 // Errors
 
 // Types and methods
 pub struct Bdd {
   owner : Manager
-  root : Int
+  root : Int32
 }
 pub fn Bdd::same(Self, Self) -> Bool
 
 pub(all) enum BddError {
-  InvalidBudget(String, Int)
+  InvalidBudget(String, Int32)
   EmptyVariable
   InvalidVariableName(String)
   DuplicateVariable(String)
   UnknownVariable(String)
   ForeignHandle
-  NodeBudgetExceeded(Int)
-  WorkBudgetExceeded(Int)
-  InputBudgetExceeded(Int)
-  DepthBudgetExceeded(Int)
-  ModelBudgetExceeded(Int)
-  ConstraintBudgetExceeded(Int)
-  AnalysisBudgetExceeded(Int)
-  OutputBudgetExceeded(Int)
-  IterationBudgetExceeded(Int)
+  NodeBudgetExceeded(Int32)
+  WorkBudgetExceeded(Int32)
+  InputBudgetExceeded(Int32)
+  DepthBudgetExceeded(Int32)
+  ModelBudgetExceeded(Int32)
+  ConstraintBudgetExceeded(Int32)
+  AnalysisBudgetExceeded(Int32)
+  OutputBudgetExceeded(Int32)
+  IterationBudgetExceeded(Int32)
   ArithmeticOverflow
   InvalidArgument(String)
   InvalidArtifact(String)
-  UnsupportedVersion(Int)
+  UnsupportedVersion(Int32)
 } derive(Eq, @debug.Debug)
+pub fn BddError::equal(Self, Self) -> Bool
+pub fn BddError::not_equal(Self, Self) -> Bool
+pub fn BddError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BddStatistics {
-  declared_variables : Int
-  support_variables : Int
-  reachable_nodes : Int
-  retained_nodes : Int
+  declared_variables : Int32
+  support_variables : Int32
+  reachable_nodes : Int32
+  retained_nodes : Int32
   model_count_decimal : String
 } derive(Eq, @debug.Debug)
+pub fn BddStatistics::equal(Self, Self) -> Bool
+pub fn BddStatistics::not_equal(Self, Self) -> Bool
+pub fn BddStatistics::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ConstraintError {
   EmptyConstraintName
@@ -54,6 +60,9 @@ pub(all) enum ConstraintError {
   ConstraintCompileFailure(String, ExpressionError)
   ConstraintAnalysisFailure(BddError)
 } derive(Eq, @debug.Debug)
+pub fn ConstraintError::equal(Self, Self) -> Bool
+pub fn ConstraintError::not_equal(Self, Self) -> Bool
+pub fn ConstraintError::to_repr(Self) -> @debug.Repr
 
 pub struct ConstraintReport {
   combined : Bdd
@@ -66,22 +75,34 @@ pub struct ConstraintReport {
 pub(all) struct Cube {
   values : Array[(String, Bool)]
 } derive(Eq, @debug.Debug)
+pub fn Cube::equal(Self, Self) -> Bool
+pub fn Cube::not_equal(Self, Self) -> Bool
+pub fn Cube::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CubeEnumeration {
   cubes : Array[Cube]
   complete : Bool
 } derive(Eq, @debug.Debug)
+pub fn CubeEnumeration::equal(Self, Self) -> Bool
+pub fn CubeEnumeration::not_equal(Self, Self) -> Bool
+pub fn CubeEnumeration::to_repr(Self) -> @debug.Repr
 
 type DecisionNode derive(Eq, @debug.Debug)
+pub fn DecisionNode::equal(Self, Self) -> Bool
+pub fn DecisionNode::not_equal(Self, Self) -> Bool
+pub fn DecisionNode::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ExpressionError {
   ParseFailure(ParseDiagnostic)
   CompileFailure(BddError)
 } derive(Eq, @debug.Debug)
+pub fn ExpressionError::equal(Self, Self) -> Bool
+pub fn ExpressionError::not_equal(Self, Self) -> Bool
+pub fn ExpressionError::to_repr(Self) -> @debug.Repr
 
 pub struct Manager {
   variables : Array[String]
-  variable_index : @hashmap.HashMap[String, Int]
+  variable_index : @hashmap.HashMap[String, Int32]
   budget : ResourceBudget
   // private fields
 }
@@ -97,8 +118,8 @@ pub fn Manager::cube_to_bdd(Self, Cube) -> Result[Bdd, BddError]
 pub fn Manager::decode_json(String, ResourceBudget) -> Result[(Self, Bdd), BddError]
 pub fn Manager::diagnose_constraints(Self, Array[NamedConstraint]) -> Result[ConstraintReport, ConstraintError]
 pub fn Manager::encode_json(Self, Bdd) -> Result[String, BddError]
-pub fn Manager::enumerate_cubes(Self, Bdd, Int) -> Result[CubeEnumeration, BddError]
-pub fn Manager::enumerate_models(Self, Bdd, Int) -> Result[ModelEnumeration, BddError]
+pub fn Manager::enumerate_cubes(Self, Bdd, Int32) -> Result[CubeEnumeration, BddError]
+pub fn Manager::enumerate_models(Self, Bdd, Int32) -> Result[ModelEnumeration, BddError]
 pub fn Manager::equivalent(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::evaluate(Self, Bdd, Array[(String, Bool)]) -> Result[Bool, BddError]
 pub fn Manager::evaluate_partial(Self, Bdd, Array[(String, Bool)]) -> Result[PartialValue, BddError]
@@ -115,10 +136,10 @@ pub fn Manager::not_bdd(Self, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::optimize_order(Self, Bdd) -> Result[ReorderResult, BddError]
 pub fn Manager::or_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 pub fn Manager::reach(Self, Bdd, Bdd, StateEncoding, Bdd?) -> Result[ReachabilityResult, BddError]
-pub fn Manager::reachable_node_count(Self, Bdd) -> Result[Int, BddError]
+pub fn Manager::reachable_node_count(Self, Bdd) -> Result[Int32, BddError]
 pub fn Manager::reorder(Self, Bdd, Array[String]) -> Result[ReorderResult, BddError]
 pub fn Manager::restrict(Self, Bdd, Array[(String, Bool)]) -> Result[Bdd, BddError]
-pub fn Manager::retained_node_count(Self) -> Int
+pub fn Manager::retained_node_count(Self) -> Int32
 pub fn Manager::sat_count_decimal(Self, Bdd) -> Result[String, BddError]
 pub fn Manager::sat_count_u64(Self, Bdd) -> Result[UInt64, BddError]
 pub fn Manager::sat_one(Self, Bdd) -> Result[Model?, BddError]
@@ -127,43 +148,62 @@ pub fn Manager::statistics(Self, Bdd) -> Result[BddStatistics, BddError]
 pub fn Manager::support(Self, Bdd) -> Result[Array[String], BddError]
 pub fn Manager::to_dot(Self, Bdd, String) -> Result[String, BddError]
 pub fn Manager::true_bdd(Self) -> Bdd
-pub fn Manager::truth_table(Self, Bdd, Int) -> Result[TruthTable, BddError]
+pub fn Manager::truth_table(Self, Bdd, Int32) -> Result[TruthTable, BddError]
 pub fn Manager::validate(Self, Bdd) -> Result[Unit, BddError]
 pub fn Manager::variable(Self, String) -> Result[Bdd, BddError]
-pub fn Manager::variable_count(Self) -> Int
+pub fn Manager::variable_count(Self) -> Int32
 pub fn Manager::variable_names(Self) -> Array[String]
 pub fn Manager::xor_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 
 pub(all) struct Model {
   values : Array[(String, Bool)]
 } derive(Eq, @debug.Debug)
+pub fn Model::equal(Self, Self) -> Bool
+pub fn Model::not_equal(Self, Self) -> Bool
+pub fn Model::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ModelEnumeration {
   models : Array[Model]
   complete : Bool
 } derive(Eq, @debug.Debug)
+pub fn ModelEnumeration::equal(Self, Self) -> Bool
+pub fn ModelEnumeration::not_equal(Self, Self) -> Bool
+pub fn ModelEnumeration::to_repr(Self) -> @debug.Repr
 
 pub(all) struct NamedConstraint {
   name : String
   expression : String
 } derive(Eq, @debug.Debug)
+pub fn NamedConstraint::equal(Self, Self) -> Bool
+pub fn NamedConstraint::not_equal(Self, Self) -> Bool
+pub fn NamedConstraint::to_repr(Self) -> @debug.Repr
 
 type NodeKey derive(Eq, Hash)
+pub fn NodeKey::equal(Self, Self) -> Bool
+pub fn NodeKey::hash(Self) -> Int32
+pub fn NodeKey::hash_combine(Self, Hasher) -> Unit
+pub fn NodeKey::not_equal(Self, Self) -> Bool
 
 pub(all) struct ParseDiagnostic {
-  offset : Int
+  offset : Int32
   message : String
 } derive(Eq, @debug.Debug)
+pub fn ParseDiagnostic::equal(Self, Self) -> Bool
+pub fn ParseDiagnostic::not_equal(Self, Self) -> Bool
+pub fn ParseDiagnostic::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PartialValue {
   AlwaysFalse
   AlwaysTrue
   Undetermined
 } derive(Eq, @debug.Debug)
+pub fn PartialValue::equal(Self, Self) -> Bool
+pub fn PartialValue::not_equal(Self, Self) -> Bool
+pub fn PartialValue::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ReachabilityResult {
   reachable : Bdd
-  iterations : Int
+  iterations : Int32
   fixed_point : Bool
   invariant_holds : Bool
   witness : Model?
@@ -173,29 +213,35 @@ pub(all) struct RelationCheck {
   holds : Bool
   witness : Model?
 } derive(Eq, @debug.Debug)
+pub fn RelationCheck::equal(Self, Self) -> Bool
+pub fn RelationCheck::not_equal(Self, Self) -> Bool
+pub fn RelationCheck::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ReorderResult {
   manager : Manager
   root : Bdd
-  before_nodes : Int
-  after_nodes : Int
-  attempted_orders : Int
+  before_nodes : Int32
+  after_nodes : Int32
+  attempted_orders : Int32
 }
 
 pub(all) struct ResourceBudget {
-  max_nodes : Int
-  max_cache_entries : Int
-  max_work : Int
-  max_input_bytes : Int
-  max_depth : Int
-  max_models : Int
-  max_constraints : Int
-  max_analysis_steps : Int
-  max_output_bytes : Int
-  max_reorder_attempts : Int
-  max_iterations : Int
+  max_nodes : Int32
+  max_cache_entries : Int32
+  max_work : Int32
+  max_input_bytes : Int32
+  max_depth : Int32
+  max_models : Int32
+  max_constraints : Int32
+  max_analysis_steps : Int32
+  max_output_bytes : Int32
+  max_reorder_attempts : Int32
+  max_iterations : Int32
 } derive(Eq, @debug.Debug)
 pub fn ResourceBudget::default() -> Self
+pub fn ResourceBudget::equal(Self, Self) -> Bool
+pub fn ResourceBudget::not_equal(Self, Self) -> Bool
+pub fn ResourceBudget::to_repr(Self) -> @debug.Repr
 
 pub struct StateEncoding {
   owner : Manager
@@ -209,11 +255,17 @@ pub(all) struct TruthRow {
   values : Array[(String, Bool)]
   result : Bool
 } derive(Eq, @debug.Debug)
+pub fn TruthRow::equal(Self, Self) -> Bool
+pub fn TruthRow::not_equal(Self, Self) -> Bool
+pub fn TruthRow::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TruthTable {
   rows : Array[TruthRow]
   complete : Bool
 } derive(Eq, @debug.Debug)
+pub fn TruthTable::equal(Self, Self) -> Bool
+pub fn TruthTable::not_equal(Self, Self) -> Bool
+pub fn TruthTable::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

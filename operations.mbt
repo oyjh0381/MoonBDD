@@ -1,5 +1,5 @@
 ///|
-fn Manager::top_variable(self : Manager, root : Int) -> Int {
+fn Manager::top_variable(self : Manager, root : Int32) -> Int32 {
   if root <= 1 {
     self.variables.length()
   } else {
@@ -10,10 +10,10 @@ fn Manager::top_variable(self : Manager, root : Int) -> Int {
 ///|
 fn Manager::cofactor(
   self : Manager,
-  root : Int,
-  variable : Int,
+  root : Int32,
+  variable : Int32,
   high : Bool,
-) -> Int {
+) -> Int32 {
   if root <= 1 {
     root
   } else {
@@ -31,7 +31,7 @@ fn Manager::cofactor(
 }
 
 ///|
-fn minimum3(first : Int, second : Int, third : Int) -> Int {
+fn minimum3(first : Int32, second : Int32, third : Int32) -> Int32 {
   let left = if first < second { first } else { second }
   if left < third {
     left
@@ -43,12 +43,12 @@ fn minimum3(first : Int, second : Int, third : Int) -> Int {
 ///|
 fn Manager::ite_root(
   self : Manager,
-  condition : Int,
-  then_root : Int,
-  else_root : Int,
+  condition : Int32,
+  then_root : Int32,
+  else_root : Int32,
   work : WorkCounter,
-  depth : Int,
-) -> Result[Int, BddError] {
+  depth : Int32,
+) -> Result[Int32, BddError] {
   if depth > self.budget.max_depth {
     return Err(DepthBudgetExceeded(self.budget.max_depth))
   }
@@ -68,7 +68,7 @@ fn Manager::ite_root(
   if then_root == 1 && else_root == 0 {
     return Ok(condition)
   }
-  let key : IteKey = { condition, then_root, else_root }
+  let key : IteKey = { condition, then_root, else_root, }
   match self.ite_cache.get(key) {
     Some(root) => return Ok(root)
     None => ()
@@ -126,7 +126,7 @@ pub fn Manager::ite(
   let work = WorkCounter::new(self.budget.max_work)
   match
     self.ite_root(condition.root, then_value.root, else_value.root, work, 0) {
-    Ok(root) => Ok({ owner: self, root })
+    Ok(root) => Ok({ owner: self, root, })
     Err(error) => Err(error)
   }
 }
@@ -199,7 +199,7 @@ pub fn Manager::evaluate(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let values : @hashmap.HashMap[Int, Bool] = @hashmap.HashMap([])
+  let values : @hashmap.HashMap[Int32, Bool] = @hashmap.HashMap([])
   for pair in assignment {
     let (name, selected) = pair
     match self.variable_index.get(name) {

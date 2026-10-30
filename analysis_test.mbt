@@ -72,7 +72,7 @@ test "truth table handles a Manager with no declared variables" {
   let manager = @moonbdd.Manager::new([], @moonbdd.ResourceBudget::default()).unwrap()
   let table = manager.truth_table(manager.true_bdd(), 1).unwrap()
   assert_true(table.complete)
-  assert_eq(table.rows, [{ values: [], result: true }])
+  assert_eq(table.rows, [{ values: [], result: true, }])
 }
 
 ///|
@@ -82,8 +82,8 @@ test "disjoint cubes compactly cover satisfying assignments" {
   let enumeration = manager.enumerate_cubes(formula, 8).unwrap()
   assert_true(enumeration.complete)
   assert_eq(enumeration.cubes, [
-    { values: [("a", false), ("c", true)] },
-    { values: [("a", true), ("b", true)] },
+    { values: [("a", false), ("c", true)], },
+    { values: [("a", true), ("b", true)], },
   ])
   let mut rebuilt = manager.false_bdd()
   for cube in enumeration.cubes {
@@ -101,7 +101,7 @@ test "cube enumeration covers constants truncation and budgets" {
   let manager = analysis_manager()
   let tautology = manager.enumerate_cubes(manager.true_bdd(), 1).unwrap()
   assert_true(tautology.complete)
-  assert_eq(tautology.cubes, [{ values: [] }])
+  assert_eq(tautology.cubes, [{ values: [], }])
   let contradiction = manager.enumerate_cubes(manager.false_bdd(), 1).unwrap()
   assert_true(contradiction.complete)
   assert_eq(contradiction.cubes, [])
@@ -119,11 +119,11 @@ test "cube enumeration covers constants truncation and budgets" {
     is Err(ModelBudgetExceeded(1)),
   )
   assert_true(
-    manager.cube_to_bdd({ values: [("missing", true)] })
+    manager.cube_to_bdd({ values: [("missing", true)], })
     is Err(UnknownVariable("missing")),
   )
   assert_true(
-    manager.cube_to_bdd({ values: [("a", true), ("a", false)] })
+    manager.cube_to_bdd({ values: [("a", true), ("a", false)], })
     is Err(InvalidArgument(_)),
   )
   let analysis_limited = @moonbdd.Manager::new(["a"], {
@@ -131,7 +131,7 @@ test "cube enumeration covers constants truncation and budgets" {
     max_analysis_steps: 1,
   }).unwrap()
   assert_true(
-    analysis_limited.cube_to_bdd({ values: [("a", true)] })
+    analysis_limited.cube_to_bdd({ values: [("a", true)], })
     is Err(AnalysisBudgetExceeded(1)),
   )
   let scan_limited = @moonbdd.Manager::new(["a", "b"], {
@@ -139,7 +139,7 @@ test "cube enumeration covers constants truncation and budgets" {
     max_analysis_steps: 2,
   }).unwrap()
   assert_true(
-    scan_limited.cube_to_bdd({ values: [("b", true)] })
+    scan_limited.cube_to_bdd({ values: [("b", true)], })
     is Err(AnalysisBudgetExceeded(2)),
   )
 }
@@ -204,9 +204,9 @@ test "constraint diagnosis reports witnesses and redundant constraints" {
   ).unwrap()
   let report = manager
     .diagnose_constraints([
-      { name: "database-required", expression: "database" },
-      { name: "cache-safe", expression: "cache -> database" },
-      { name: "weak-policy", expression: "database | cache" },
+      { name: "database-required", expression: "database", },
+      { name: "cache-safe", expression: "cache -> database", },
+      { name: "weak-policy", expression: "database | cache", },
     ])
     .unwrap()
   assert_true(report.satisfiable)
@@ -221,10 +221,10 @@ test "constraint diagnosis computes a deletion-minimal conflict" {
   let manager = analysis_manager()
   let report = manager
     .diagnose_constraints([
-      { name: "enable-a", expression: "a" },
-      { name: "a-needs-b", expression: "!a | b" },
-      { name: "disable-b", expression: "!b" },
-      { name: "irrelevant", expression: "c | !c" },
+      { name: "enable-a", expression: "a", },
+      { name: "a-needs-b", expression: "!a | b", },
+      { name: "disable-b", expression: "!b", },
+      { name: "irrelevant", expression: "c | !c", },
     ])
     .unwrap()
   assert_false(report.satisfiable)
@@ -239,17 +239,17 @@ test "constraint diagnosis validates names expressions and analysis budgets" {
   let manager = analysis_manager()
   assert_true(
     manager.diagnose_constraints([
-      { name: "same", expression: "a" },
-      { name: "same", expression: "b" },
+      { name: "same", expression: "a", },
+      { name: "same", expression: "b", },
     ])
     is Err(DuplicateConstraintName("same")),
   )
   assert_true(
-    manager.diagnose_constraints([{ name: "", expression: "a" }])
+    manager.diagnose_constraints([{ name: "", expression: "a", }])
     is Err(EmptyConstraintName),
   )
   assert_true(
-    manager.diagnose_constraints([{ name: "broken", expression: "a & )" }])
+    manager.diagnose_constraints([{ name: "broken", expression: "a & )", }])
     is Err(ConstraintCompileFailure("broken", ParseFailure(_))),
   )
   let limited = @moonbdd.Manager::new(["a"], {
@@ -258,8 +258,8 @@ test "constraint diagnosis validates names expressions and analysis budgets" {
   }).unwrap()
   assert_true(
     limited.diagnose_constraints([
-      { name: "one", expression: "a" },
-      { name: "two", expression: "!a" },
+      { name: "one", expression: "a", },
+      { name: "two", expression: "!a", },
     ])
     is Err(ConstraintAnalysisFailure(ConstraintBudgetExceeded(1))),
   )
@@ -283,7 +283,7 @@ test "constraint diagnosis charges semantic checks to analysis steps" {
     max_analysis_steps: 2,
   }).unwrap()
   assert_true(
-    manager.diagnose_constraints([{ name: "one", expression: "a" }])
+    manager.diagnose_constraints([{ name: "one", expression: "a", }])
     is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(2))),
   )
   let redundancy_limited = @moonbdd.Manager::new(["a"], {
@@ -291,7 +291,7 @@ test "constraint diagnosis charges semantic checks to analysis steps" {
     max_analysis_steps: 3,
   }).unwrap()
   assert_true(
-    redundancy_limited.diagnose_constraints([{ name: "one", expression: "a" }])
+    redundancy_limited.diagnose_constraints([{ name: "one", expression: "a", }])
     is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(3))),
   )
   let conflict_limited = @moonbdd.Manager::new(["a"], {
@@ -300,8 +300,8 @@ test "constraint diagnosis charges semantic checks to analysis steps" {
   }).unwrap()
   assert_true(
     conflict_limited.diagnose_constraints([
-      { name: "positive", expression: "a" },
-      { name: "negative", expression: "!a" },
+      { name: "positive", expression: "a", },
+      { name: "negative", expression: "!a", },
     ])
     is Err(ConstraintAnalysisFailure(AnalysisBudgetExceeded(6))),
   )

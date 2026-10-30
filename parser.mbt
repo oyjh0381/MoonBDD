@@ -1,7 +1,7 @@
 ///|
 /// One stable source-positioned expression diagnostic.
 pub(all) struct ParseDiagnostic {
-  offset : Int
+  offset : Int32
   message : String
 } derive(Debug, Eq)
 
@@ -15,8 +15,8 @@ pub(all) enum ExpressionError {
 priv struct ExpressionParser {
   manager : Manager
   data : Bytes
-  mut cursor : Int
-  mut nesting : Int
+  mut cursor : Int32
+  mut nesting : Int32
 }
 
 ///|
@@ -24,7 +24,7 @@ fn ExpressionParser::failure(
   self : ExpressionParser,
   message : String,
 ) -> Result[Bdd, ExpressionError] {
-  Err(ParseFailure({ offset: self.cursor, message }))
+  Err(ParseFailure({ offset: self.cursor, message, }))
 }
 
 ///|
@@ -309,7 +309,12 @@ pub fn Manager::compile(
   if data.length() > self.budget.max_input_bytes {
     return Err(CompileFailure(InputBudgetExceeded(self.budget.max_input_bytes)))
   }
-  let parser : ExpressionParser = { manager: self, data, cursor: 0, nesting: 0 }
+  let parser : ExpressionParser = {
+    manager: self,
+    data,
+    cursor: 0,
+    nesting: 0,
+  }
   let value = match parser.parse_equivalence() {
     Ok(value) => value
     Err(error) => return Err(error)

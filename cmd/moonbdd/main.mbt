@@ -1,5 +1,5 @@
 ///|
-extern "C" fn process_exit(code : Int) = "exit"
+extern "C" fn process_exit(code : Int32) = "exit"
 
 ///|
 fn usage() -> String {
@@ -66,7 +66,7 @@ async fn expression_input(argument : String) -> Result[String, String] {
 }
 
 ///|
-fn classify_error(message : String) -> (String, Int) {
+fn classify_error(message : String) -> (String, Int32) {
   if message.has_prefix("Usage:") {
     ("usage", 2)
   } else if message.contains("ParseFailure") {
@@ -95,7 +95,7 @@ fn classify_error(message : String) -> (String, Int) {
 }
 
 ///|
-fn machine_error(message : String) -> (String, Int) {
+fn machine_error(message : String) -> (String, Int32) {
   let (code, exit_code) = classify_error(message)
   let payload = "{\"code\":" +
     Json::string(code).stringify() +
@@ -173,7 +173,7 @@ fn cube_enumeration_json(enumeration : @bdd.CubeEnumeration) -> String {
 }
 
 ///|
-fn parse_maximum(text : String, label : String) -> Result[Int, String] {
+fn parse_maximum(text : String, label : String) -> Result[Int32, String] {
   let value = @string.parse_int(text) catch {
     _ => return Err("InvalidArgument: " + label + " must be an integer")
   }
@@ -231,7 +231,7 @@ fn parse_named_constraints(
       let expression = @utf8.decode(data[separator + 1:end]) catch {
         _ => return Err("InvalidArgument: constraint expression is not UTF-8")
       }
-      constraints.push({ name, expression })
+      constraints.push({ name, expression, })
       start = end + 1
     }
   }

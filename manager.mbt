@@ -35,7 +35,7 @@ pub fn Manager::new(
     Ok(_) => ()
   }
   let names = variable_names.copy()
-  let index : @hashmap.HashMap[String, Int] = @hashmap.HashMap([])
+  let index : @hashmap.HashMap[String, Int32] = @hashmap.HashMap([])
   for i, name in names {
     if name.length() == 0 {
       return Err(EmptyVariable)
@@ -53,8 +53,8 @@ pub fn Manager::new(
     variable_index: index,
     budget,
     nodes: [
-      { variable: -1, low: 0, high: 0 },
-      { variable: -1, low: 1, high: 1 },
+      { variable: -1, low: 0, high: 0, },
+      { variable: -1, low: 1, high: 1, },
     ],
     unique: @hashmap.HashMap([]),
     ite_cache: @hashmap.HashMap([]),
@@ -67,18 +67,18 @@ pub fn Manager::variable_names(self : Manager) -> Array[String] {
 }
 
 ///|
-pub fn Manager::variable_count(self : Manager) -> Int {
+pub fn Manager::variable_count(self : Manager) -> Int32 {
   self.variables.length()
 }
 
 ///|
 pub fn Manager::false_bdd(self : Manager) -> Bdd {
-  { owner: self, root: 0 }
+  { owner: self, root: 0, }
 }
 
 ///|
 pub fn Manager::true_bdd(self : Manager) -> Bdd {
-  { owner: self, root: 1 }
+  { owner: self, root: 1, }
 }
 
 ///|
@@ -113,11 +113,11 @@ pub fn Bdd::same(self : Bdd, other : Bdd) -> Bool {
 ///|
 fn Manager::mk(
   self : Manager,
-  variable : Int,
-  low : Int,
-  high : Int,
+  variable : Int32,
+  low : Int32,
+  high : Int32,
   work : WorkCounter,
-) -> Result[Int, BddError] {
+) -> Result[Int32, BddError] {
   match work.step() {
     Err(error) => return Err(error)
     Ok(_) => ()
@@ -125,7 +125,7 @@ fn Manager::mk(
   if low == high {
     return Ok(low)
   }
-  let key : NodeKey = { variable, low, high }
+  let key : NodeKey = { variable, low, high, }
   match self.unique.get(key) {
     Some(existing) => Ok(existing)
     None => {
@@ -133,7 +133,7 @@ fn Manager::mk(
         return Err(NodeBudgetExceeded(self.budget.max_nodes))
       }
       let id = self.nodes.length()
-      self.nodes.push({ variable, low, high })
+      self.nodes.push({ variable, low, high, })
       self.unique.set(key, id)
       Ok(id)
     }
@@ -150,7 +150,7 @@ pub fn Manager::variable(
     Some(variable) => {
       let work = WorkCounter::new(self.budget.max_work)
       match self.mk(variable, 0, 1, work) {
-        Ok(root) => Ok({ owner: self, root })
+        Ok(root) => Ok({ owner: self, root, })
         Err(error) => Err(error)
       }
     }
@@ -161,12 +161,12 @@ pub fn Manager::variable(
 pub fn Manager::reachable_node_count(
   self : Manager,
   value : Bdd,
-) -> Result[Int, BddError] {
+) -> Result[Int32, BddError] {
   match self.validate(value) {
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let seen : @hashmap.HashMap[Int, Unit] = @hashmap.HashMap([])
+  let seen : @hashmap.HashMap[Int32, Unit] = @hashmap.HashMap([])
   let pending = [value.root]
   let work = WorkCounter::new(self.budget.max_work)
   while pending.length() > 0 {
@@ -186,6 +186,6 @@ pub fn Manager::reachable_node_count(
 }
 
 ///|
-pub fn Manager::retained_node_count(self : Manager) -> Int {
+pub fn Manager::retained_node_count(self : Manager) -> Int32 {
   self.nodes.length() - 2
 }

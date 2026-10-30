@@ -2,17 +2,17 @@
 /// Explicit limits for operations whose time or retained state can grow
 /// exponentially. Every value must be positive.
 pub(all) struct ResourceBudget {
-  max_nodes : Int
-  max_cache_entries : Int
-  max_work : Int
-  max_input_bytes : Int
-  max_depth : Int
-  max_models : Int
-  max_constraints : Int
-  max_analysis_steps : Int
-  max_output_bytes : Int
-  max_reorder_attempts : Int
-  max_iterations : Int
+  max_nodes : Int32
+  max_cache_entries : Int32
+  max_work : Int32
+  max_input_bytes : Int32
+  max_depth : Int32
+  max_models : Int32
+  max_constraints : Int32
+  max_analysis_steps : Int32
+  max_output_bytes : Int32
+  max_reorder_attempts : Int32
+  max_iterations : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -36,75 +36,75 @@ pub fn ResourceBudget::default() -> ResourceBudget {
 /// Stable public error categories. Errors never encode private node-table
 /// layout and are suitable for mapping to CLI exit categories.
 pub(all) enum BddError {
-  InvalidBudget(String, Int)
+  InvalidBudget(String, Int32)
   EmptyVariable
   InvalidVariableName(String)
   DuplicateVariable(String)
   UnknownVariable(String)
   ForeignHandle
-  NodeBudgetExceeded(Int)
-  WorkBudgetExceeded(Int)
-  InputBudgetExceeded(Int)
-  DepthBudgetExceeded(Int)
-  ModelBudgetExceeded(Int)
-  ConstraintBudgetExceeded(Int)
-  AnalysisBudgetExceeded(Int)
-  OutputBudgetExceeded(Int)
-  IterationBudgetExceeded(Int)
+  NodeBudgetExceeded(Int32)
+  WorkBudgetExceeded(Int32)
+  InputBudgetExceeded(Int32)
+  DepthBudgetExceeded(Int32)
+  ModelBudgetExceeded(Int32)
+  ConstraintBudgetExceeded(Int32)
+  AnalysisBudgetExceeded(Int32)
+  OutputBudgetExceeded(Int32)
+  IterationBudgetExceeded(Int32)
   ArithmeticOverflow
   InvalidArgument(String)
   InvalidArtifact(String)
-  UnsupportedVersion(Int)
+  UnsupportedVersion(Int32)
 } derive(Debug, Eq)
 
 ///|
 /// A Manager-owned reference to one canonical Boolean Function.
 pub struct Bdd {
   owner : Manager
-  root : Int
+  root : Int32
 }
 
 ///|
 struct DecisionNode {
-  variable : Int
-  low : Int
-  high : Int
+  variable : Int32
+  low : Int32
+  high : Int32
 } derive(Debug, Eq)
 
 ///|
 struct NodeKey {
-  variable : Int
-  low : Int
-  high : Int
+  variable : Int32
+  low : Int32
+  high : Int32
 } derive(Eq, Hash)
 
 ///|
 priv struct IteKey {
-  condition : Int
-  then_root : Int
-  else_root : Int
+  condition : Int32
+  then_root : Int32
+  else_root : Int32
 } derive(Eq, Hash)
 
 ///|
 /// Owner of one Variable Order and one canonical ROBDD node universe.
 pub struct Manager {
   variables : Array[String]
-  variable_index : @hashmap.HashMap[String, Int]
+  variable_index : @hashmap.HashMap[String, Int32]
   budget : ResourceBudget
   priv nodes : Array[DecisionNode]
-  priv unique : @hashmap.HashMap[NodeKey, Int]
-  priv ite_cache : @hashmap.HashMap[IteKey, Int]
+  priv unique : @hashmap.HashMap[NodeKey, Int32]
+  priv ite_cache : @hashmap.HashMap[IteKey, Int32]
 }
 
 ///|
 priv struct WorkCounter {
-  mut used : Int
-  maximum : Int
+  mut used : Int32
+  maximum : Int32
 }
 
 ///|
-fn WorkCounter::new(maximum : Int) -> WorkCounter {
-  { used: 0, maximum }
+fn WorkCounter::new(maximum : Int32) -> WorkCounter {
+  { used: 0, maximum, }
 }
 
 ///|

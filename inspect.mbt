@@ -1,10 +1,10 @@
 ///|
 /// Deterministic public statistics for one BDD Handle.
 pub(all) struct BddStatistics {
-  declared_variables : Int
-  support_variables : Int
-  reachable_nodes : Int
-  retained_nodes : Int
+  declared_variables : Int32
+  support_variables : Int32
+  reachable_nodes : Int32
+  retained_nodes : Int32
   model_count_decimal : String
 } derive(Debug, Eq)
 
@@ -35,7 +35,7 @@ pub fn Manager::statistics(
 }
 
 ///|
-fn dot_node_name(id : Int) -> String {
+fn dot_node_name(id : Int32) -> String {
   if id == 0 {
     "false_terminal"
   } else if id == 1 {
@@ -56,7 +56,7 @@ pub fn Manager::to_dot(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let ordered : Array[Int] = []
+  let ordered : Array[Int32] = []
   match
     self.postorder_visit(
       value.root,
@@ -68,7 +68,7 @@ pub fn Manager::to_dot(
     Err(error) => return Err(error)
     Ok(_) => ()
   }
-  let remap : @hashmap.HashMap[Int, Int] = @hashmap.HashMap([(0, 0), (1, 1)])
+  let remap : @hashmap.HashMap[Int32, Int32] = @hashmap.HashMap([(0, 0), (1, 1)])
   for index, old_id in ordered {
     remap.set(old_id, index + 2)
   }
@@ -121,10 +121,10 @@ pub fn Manager::to_dot(
 ///|
 fn Manager::canonical_expression_root(
   self : Manager,
-  root : Int,
-  memo : @hashmap.HashMap[Int, String],
+  root : Int32,
+  memo : @hashmap.HashMap[Int32, String],
   work : WorkCounter,
-  depth : Int,
+  depth : Int32,
 ) -> Result[String, BddError] {
   if root == 0 {
     return Ok("false")

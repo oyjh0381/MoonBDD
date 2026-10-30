@@ -74,13 +74,13 @@ pub struct ConstraintReport {
 
 ///|
 priv struct AnalysisCounter {
-  mut used : Int
-  maximum : Int
+  mut used : Int32
+  maximum : Int32
 }
 
 ///|
-fn AnalysisCounter::new(maximum : Int) -> AnalysisCounter {
-  { used: 0, maximum }
+fn AnalysisCounter::new(maximum : Int32) -> AnalysisCounter {
+  { used: 0, maximum, }
 }
 
 ///|
@@ -115,11 +115,11 @@ pub fn Manager::evaluate_partial(
 ///|
 fn Manager::truth_rows(
   self : Manager,
-  root : Int,
-  variable : Int,
+  root : Int32,
+  variable : Int32,
   current : Array[(String, Bool)],
   rows : Array[TruthRow],
-  limit : Int,
+  limit : Int32,
   work : WorkCounter,
 ) -> Result[Bool, BddError] {
   match work.step() {
@@ -130,7 +130,7 @@ fn Manager::truth_rows(
     return Err(DepthBudgetExceeded(self.budget.max_depth))
   }
   if variable == self.variables.length() {
-    rows.push({ values: current.copy(), result: root == 1 })
+    rows.push({ values: current.copy(), result: root == 1, })
     return Ok(true)
   }
   let mut low = root
@@ -169,7 +169,7 @@ fn Manager::truth_rows(
 pub fn Manager::truth_table(
   self : Manager,
   value : Bdd,
-  maximum_rows : Int,
+  maximum_rows : Int32,
 ) -> Result[TruthTable, BddError] {
   match self.validate(value) {
     Err(error) => return Err(error)
@@ -194,18 +194,18 @@ pub fn Manager::truth_table(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  Ok({ rows, complete })
+  Ok({ rows, complete, })
 }
 
 ///|
 fn Manager::enumerate_cube_roots(
   self : Manager,
-  root : Int,
+  root : Int32,
   current : Array[(String, Bool)],
   cubes : Array[Cube],
-  limit : Int,
+  limit : Int32,
   work : WorkCounter,
-  depth : Int,
+  depth : Int32,
 ) -> Result[Bool, BddError] {
   if root == 0 {
     return Ok(true)
@@ -221,7 +221,7 @@ fn Manager::enumerate_cube_roots(
     Ok(_) => ()
   }
   if root == 1 {
-    cubes.push({ values: current.copy() })
+    cubes.push({ values: current.copy(), })
     return Ok(true)
   }
   let node = self.nodes[root]
@@ -255,7 +255,7 @@ fn Manager::enumerate_cube_roots(
 pub fn Manager::enumerate_cubes(
   self : Manager,
   value : Bdd,
-  maximum_cubes : Int,
+  maximum_cubes : Int32,
 ) -> Result[CubeEnumeration, BddError] {
   match self.validate(value) {
     Err(error) => return Err(error)
@@ -280,7 +280,7 @@ pub fn Manager::enumerate_cubes(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  Ok({ cubes, complete })
+  Ok({ cubes, complete, })
 }
 
 ///|
@@ -290,7 +290,7 @@ pub fn Manager::cube_to_bdd(
   self : Manager,
   cube : Cube,
 ) -> Result[Bdd, BddError] {
-  let selected : @hashmap.HashMap[Int, Bool] = @hashmap.HashMap([])
+  let selected : @hashmap.HashMap[Int32, Bool] = @hashmap.HashMap([])
   let counter = AnalysisCounter::new(self.budget.max_analysis_steps)
   for pair in cube.values {
     match counter.step() {
@@ -352,8 +352,8 @@ fn Manager::relation_result(
   counterexample : Bdd,
 ) -> Result[RelationCheck, BddError] {
   match self.sat_one(counterexample) {
-    Ok(None) => Ok({ holds: true, witness: None })
-    Ok(Some(model)) => Ok({ holds: false, witness: Some(model) })
+    Ok(None) => Ok({ holds: true, witness: None, })
+    Ok(Some(model)) => Ok({ holds: false, witness: Some(model), })
     Err(error) => Err(error)
   }
 }
@@ -487,7 +487,7 @@ fn Manager::conjoin_constraints(
 ///|
 fn without_constraint(
   constraints : Array[(String, Bdd)],
-  removed : Int,
+  removed : Int32,
 ) -> Array[(String, Bdd)] {
   let result : Array[(String, Bdd)] = []
   for index, item in constraints {

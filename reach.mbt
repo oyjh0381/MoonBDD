@@ -10,7 +10,7 @@ pub struct StateEncoding {
 /// Result of bounded finite symbolic reachability.
 pub(all) struct ReachabilityResult {
   reachable : Bdd
-  iterations : Int
+  iterations : Int32
   fixed_point : Bool
   invariant_holds : Bool
   witness : Model?
@@ -48,7 +48,7 @@ pub fn Manager::state_encoding(
     }
     seen.set(name, ())
   }
-  Ok({ owner: self, current: current.copy(), next: next.copy() })
+  Ok({ owner: self, current: current.copy(), next: next.copy(), })
 }
 
 ///|
@@ -161,5 +161,5 @@ pub fn Manager::reach(
       }
     }
   }
-  Ok({ reachable, iterations, fixed_point: fixed, invariant_holds, witness })
+  Ok({ reachable, iterations, fixed_point: fixed, invariant_holds, witness, })
 }

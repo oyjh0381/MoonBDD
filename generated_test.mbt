@@ -1,10 +1,10 @@
 ///|
-fn next_seed(state : Int) -> Int {
+fn next_seed(state : Int32) -> Int32 {
   (state * 25173 + 13849) % 65521
 }
 
 ///|
-fn generated_formula(state : Int, depth : Int) -> (String, Int) {
+fn generated_formula(state : Int32, depth : Int32) -> (String, Int32) {
   let state = next_seed(state)
   if depth == 0 {
     let atoms = ["false", "true", "a", "b", "c"]

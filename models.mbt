@@ -13,30 +13,30 @@ pub(all) struct ModelEnumeration {
 
 ///|
 priv struct CountKey {
-  root : Int
-  level : Int
+  root : Int32
+  level : Int32
 } derive(Eq, Hash)
 
 ///|
 /// Minimal exact non-negative integer used by Model Count. Digits are
 /// little-endian base 1,000,000,000 and never exposed publicly.
 priv struct DecimalNat {
-  digits : Array[Int]
+  digits : Array[Int32]
 }
 
 ///|
 fn DecimalNat::zero() -> DecimalNat {
-  { digits: [0] }
+  { digits: [0], }
 }
 
 ///|
 fn DecimalNat::one() -> DecimalNat {
-  { digits: [1] }
+  { digits: [1], }
 }
 
 ///|
 fn DecimalNat::add(self : DecimalNat, other : DecimalNat) -> DecimalNat {
-  let digits : Array[Int] = []
+  let digits : Array[Int32] = []
   let mut carry = 0
   let length = if self.digits.length() > other.digits.length() {
     self.digits.length()
@@ -63,7 +63,7 @@ fn DecimalNat::add(self : DecimalNat, other : DecimalNat) -> DecimalNat {
 
 ///|
 fn DecimalNat::times_two(self : DecimalNat) -> DecimalNat {
-  let digits : Array[Int] = []
+  let digits : Array[Int32] = []
   let mut carry = 0
   for digit in self.digits {
     let product = digit * 2 + carry
@@ -84,7 +84,7 @@ fn DecimalNat::times_two(self : DecimalNat) -> DecimalNat {
 ///|
 fn DecimalNat::times_power_of_two(
   self : DecimalNat,
-  exponent : Int,
+  exponent : Int32,
   work : WorkCounter,
 ) -> Result[DecimalNat, BddError] {
   let mut value = self
@@ -100,7 +100,7 @@ fn DecimalNat::times_power_of_two(
 
 ///|
 fn DecimalNat::to_decimal(self : DecimalNat) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let last = self.digits.length() - 1
   builder.write_string(self.digits[last].to_string())
   for i = last - 1; i >= 0; i = i - 1 {
@@ -114,7 +114,7 @@ fn DecimalNat::to_decimal(self : DecimalNat) -> String {
 }
 
 ///|
-fn DecimalNat::decimal_length(self : DecimalNat) -> Int {
+fn DecimalNat::decimal_length(self : DecimalNat) -> Int32 {
   let last = self.digits.length() - 1
   self.digits[last].to_string().length() + last * 9
 }
@@ -137,11 +137,11 @@ fn DecimalNat::to_u64(self : DecimalNat) -> Result[UInt64, BddError] {
 ///|
 fn Manager::count_root(
   self : Manager,
-  root : Int,
-  level : Int,
+  root : Int32,
+  level : Int32,
   memo : @hashmap.HashMap[CountKey, DecimalNat],
   work : WorkCounter,
-  depth : Int,
+  depth : Int32,
 ) -> Result[DecimalNat, BddError] {
   if depth > self.budget.max_depth {
     return Err(DepthBudgetExceeded(self.budget.max_depth))
@@ -159,7 +159,7 @@ fn Manager::count_root(
       work,
     )
   }
-  let key : CountKey = { root, level }
+  let key : CountKey = { root, level, }
   match memo.get(key) {
     Some(value) => return Ok(value)
     None => ()
@@ -268,17 +268,17 @@ pub fn Manager::sat_one(
     assignments.push((self.variables[level], false))
     level += 1
   }
-  Ok(Some({ values: assignments }))
+  Ok(Some({ values: assignments, }))
 }
 
 ///|
 fn Manager::enumerate_assignments(
   self : Manager,
   value : Bdd,
-  index : Int,
+  index : Int32,
   current : Array[(String, Bool)],
   output : Array[Model],
-  limit : Int,
+  limit : Int32,
   work : WorkCounter,
 ) -> Result[Unit, BddError] {
   if output.length() >= limit {
@@ -290,7 +290,7 @@ fn Manager::enumerate_assignments(
   }
   if index == self.variables.length() {
     match self.evaluate(value, current) {
-      Ok(true) => output.push({ values: current.copy() })
+      Ok(true) => output.push({ values: current.copy(), })
       Ok(false) => ()
       Err(error) => return Err(error)
     }
@@ -319,7 +319,7 @@ fn Manager::enumerate_assignments(
 pub fn Manager::enumerate_models(
   self : Manager,
   value : Bdd,
-  maximum : Int,
+  maximum : Int32,
 ) -> Result[ModelEnumeration, BddError] {
   match self.validate(value) {
     Err(error) => return Err(error)
@@ -349,5 +349,5 @@ pub fn Manager::enumerate_models(
     Err(ArithmeticOverflow) => false
     Err(error) => return Err(error)
   }
-  Ok({ models, complete })
+  Ok({ models, complete, })
 }
