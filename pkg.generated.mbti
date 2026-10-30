@@ -3,7 +3,6 @@ package "oyjh0381/moonbdd"
 
 import {
   "moonbitlang/core/debug",
-  "moonbitlang/core/hashmap",
 }
 
 // Values
@@ -13,8 +12,7 @@ pub let artifact_schema_version : Int32
 
 // Types and methods
 pub struct Bdd {
-  owner : Manager
-  root : Int32
+  // private fields
 }
 pub fn Bdd::same(Self, Self) -> Bool
 
@@ -101,8 +99,6 @@ pub fn ExpressionError::not_equal(Self, Self) -> Bool
 pub fn ExpressionError::to_repr(Self) -> @debug.Repr
 
 pub struct Manager {
-  variables : Array[String]
-  variable_index : @hashmap.HashMap[String, Int32]
   budget : ResourceBudget
   // private fields
 }
@@ -244,9 +240,7 @@ pub fn ResourceBudget::not_equal(Self, Self) -> Bool
 pub fn ResourceBudget::to_repr(Self) -> @debug.Repr
 
 pub struct StateEncoding {
-  owner : Manager
-  current : Array[String]
-  next : Array[String]
+  // private fields
 }
 pub fn StateEncoding::current_variables(Self) -> Array[String]
 pub fn StateEncoding::next_variables(Self) -> Array[String]

@@ -98,6 +98,11 @@ The mutual-exclusion example computes a finite Reachability Fixed Point and
 checks that both participants are never in the critical section together. It
 is an algorithm demonstration, not a production protocol claim.
 
+`reach` requires initial states and invariants over current Variables, and a
+Transition Relation over the declared current/next pairs. It rejects unpaired
+dimensions with `InvalidArgument`. Quantify environmental inputs explicitly
+before analysis. See the [API contract](docs/API.md#reachability).
+
 ## Correctness, safety, and scope
 
 ROBDDs are canonical only for one Variable Order and may still grow

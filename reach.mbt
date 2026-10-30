@@ -1,9 +1,9 @@
 ///|
 /// Validated pairing of current-state and next-state Boolean Variables.
 pub struct StateEncoding {
-  owner : Manager
-  current : Array[String]
-  next : Array[String]
+  priv owner : Manager
+  priv current : Array[String]
+  priv next : Array[String]
 }
 
 ///|
@@ -62,6 +62,30 @@ pub fn StateEncoding::next_variables(self : StateEncoding) -> Array[String] {
 }
 
 ///|
+// Reject free dimensions before image computation or variable renaming.
+fn Manager::validate_state_support(
+  self : Manager,
+  value : Bdd,
+  allowed : @hashmap.HashMap[String, Unit],
+  context : String,
+) -> Result[Unit, BddError] {
+  let variables = match self.support(value) {
+    Err(error) => return Err(error)
+    Ok(variables) => variables
+  }
+  for name in variables {
+    if allowed.get(name) is None {
+      return Err(
+        InvalidArgument(
+          context + " depends on a Variable outside its state encoding",
+        ),
+      )
+    }
+  }
+  Ok(())
+}
+
+///|
 fn Manager::rename_next_to_current(
   self : Manager,
   value : Bdd,
@@ -107,6 +131,29 @@ pub fn Manager::reach(
         Ok(_) => ()
       }
     None => ()
+  }
+  let current : @hashmap.HashMap[String, Unit] = @hashmap.HashMap([])
+  let paired : @hashmap.HashMap[String, Unit] = @hashmap.HashMap([])
+  for name in encoding.current {
+    current.set(name, ())
+    paired.set(name, ())
+  }
+  for name in encoding.next {
+    paired.set(name, ())
+  }
+  match self.validate_state_support(initial, current, "initial state set") {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  match self.validate_state_support(transition, paired, "transition relation") {
+    Err(error) => return Err(error)
+    Ok(_) => ()
+  }
+  if invariant is Some(required) {
+    match self.validate_state_support(required, current, "invariant") {
+      Err(error) => return Err(error)
+      Ok(_) => ()
+    }
   }
   let mut reachable = initial
   let mut iterations = 0

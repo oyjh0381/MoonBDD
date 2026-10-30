@@ -60,8 +60,8 @@ pub(all) enum BddError {
 ///|
 /// A Manager-owned reference to one canonical Boolean Function.
 pub struct Bdd {
-  owner : Manager
-  root : Int32
+  priv owner : Manager
+  priv root : Int32
 }
 
 ///|
@@ -88,8 +88,8 @@ priv struct IteKey {
 ///|
 /// Owner of one Variable Order and one canonical ROBDD node universe.
 pub struct Manager {
-  variables : Array[String]
-  variable_index : @hashmap.HashMap[String, Int32]
+  priv variables : Array[String]
+  priv variable_index : @hashmap.HashMap[String, Int32]
   budget : ResourceBudget
   priv nodes : Array[DecisionNode]
   priv unique : @hashmap.HashMap[NodeKey, Int32]

@@ -57,3 +57,11 @@ reachable nodes. Source Handles stay valid.
 successors through conjunction, existential Quantification, and Composition
 until a fixed point or iteration budget. An optional invariant returns a
 witness Model when violated.
+
+The initial set and invariant may depend only on current-state Variables.
+The Transition Relation may depend only on the paired current/next Variables.
+Unpaired dimensions return `InvalidArgument`; explicitly quantify environmental
+inputs before calling `reach`. Constants are valid in all three positions.
+Manager internals and StateEncoding pairs are private. Variable-name accessors
+return detached copies, so changing caller arrays cannot change the Variable
+Order or invalidate a previously checked encoding.

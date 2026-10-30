@@ -2,6 +2,11 @@
 
 ## 0.1.0 - Unreleased
 
+- Updated explicit trait methods and generated interfaces for MoonBit 0.10.16.
+- Protected Manager, Bdd, and StateEncoding internals from external mutation.
+- Rejected next-state initial/invariant conditions and unpaired Transition
+  Relation dimensions before reachability; added exhaustive small-graph checks.
+
 - Added Manager-owned canonical ROBDD construction and Boolean operations.
 - Added parsing, transformations, Models, and exact Model Count.
 - Added deterministic JSON v1, DOT, statistics, and canonical expressions.

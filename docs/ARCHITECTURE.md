@@ -26,3 +26,12 @@ Reordering translates the source DAG through ITE into a fresh Manager.
 Reachability conjoins states with a Transition Relation, quantifies current
 Variables, composes next Variables into current Variables, and unions successors
 until canonical equality proves a fixed point.
+
+Before iteration, reachability checks the support of initial states, the
+Transition Relation, and the optional invariant against the encoding. With
+`V` declared Variables, `P` state pairs, and `N` reachable BDD nodes across
+these inputs, this adds expected O(V + P + N) time and O(V + P + N) temporary
+space. Support traversal uses visited-node sets; it does not enumerate the
+2^P states. The fixed-point algorithm and its worst-case exponential growth
+remain unchanged. Private array fields and detached accessors preserve the
+validated Variable Order and pair mapping throughout the computation.
