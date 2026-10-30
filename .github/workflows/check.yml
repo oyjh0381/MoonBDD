@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     strategy:
@@ -13,11 +16,41 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: hustcer/setup-moonbit@v1
+        with:
+          version: '0.10.16+b1a0e846e'
+          core-version: '0.10.16+b1a0e846e'
+      - name: Prepare Windows tool paths
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tools/windows/build-shim.ps1
+          foreach ($tool in @('MOONC', 'MOONFMT', 'MOONINFO', 'MOONDOC')) {
+            $toolPath = Join-Path $PWD "_build/windows-path-shims/$($tool.ToLower()).exe"
+            "${tool}_OVERRIDE=$toolPath" >> $env:GITHUB_ENV
+          }
+          $env:MOONC_OVERRIDE = Join-Path $PWD '_build/windows-path-shims/moonc.exe'
+          Push-Location (Join-Path $env:USERPROFILE '.moon/lib/core')
+          try {
+            moon bundle --all --warn-list -a
+            if ($LASTEXITCODE -ne 0) { throw 'Core bundle failed' }
+          } finally { Pop-Location }
+      - name: Verify repository inputs and compiler version
+        run: |
+          python -m unittest discover -s tools -p test_repo_quality.py
+          python tools/repo_quality.py --history
+          python tools/check_toolchain.py
       - name: Resolve dependencies
         run: moon update
       - name: Check every target
         run: moon check --target all --deny-warn
+      - name: Build every target
+        run: moon build --target all --deny-warn
       - name: Test every target
         run: moon test --target all --deny-warn
       - name: Check formatting
@@ -27,6 +60,11 @@ jobs:
         run: moon info && git diff --exit-code
       - name: Test Native CLI
         run: python tools/test_cli.py
+      - name: Run documented examples
+        run: |
+          moon run examples/feature_constraints
+          moon run examples/digital_logic
+          moon run examples/mutex_reachability
       - name: Verify performance and effective source scale
         run: |
           python tools/benchmark.py

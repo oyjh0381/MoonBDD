@@ -39,11 +39,21 @@ canonically; it is not a workflow runtime or a general CTL/LTL model checker.
 
 After publication, install with `moon add oyjh0381/moonbdd`. From source:
 
+Requires `moonc >= 0.10.16` (validated with moon 0.1.20261016 and
+moonc 0.10.16+b1a0e846e), Python 3.10+ for verification tools, and a C toolchain
+for the Native CLI. The submission repository requires authorized GitHub access.
+
 ```sh
 moon update
 moon check --target all --deny-warn
+moon build --target all --deny-warn
 moon test --target all --deny-warn
 ```
+
+Run `python tools/check_toolchain.py` to check the minimum compiler. CI checks,
+builds, tests, runs examples, and verifies interfaces and source hygiene on
+Linux, macOS, and Windows. See [testing](docs/TESTING.md) for the Windows path
+adapter and complete reproducible commands.
 
 ## Library quick start
 

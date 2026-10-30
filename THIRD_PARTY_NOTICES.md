@@ -10,3 +10,9 @@ facts are not redistributed source code.
 
 The official `moonbitlang/async` package supplies Native CLI I/O under its
 published license. Tests use only original hand-written formulas and fixtures.
+
+The Windows argv adapter and its PowerShell launchers in `tools/windows/` were
+adapted from the local MoonBitemporal-yt project's Apache-2.0 development tools
+(2026-10-30). MoonBDD adjusts the build to support non-ASCII repository paths.
+These auxiliary tools normalize extended DOS path arguments before launching
+the installed official compiler; they contain no third-party BDD implementation.
