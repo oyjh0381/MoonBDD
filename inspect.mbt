@@ -1,12 +1,13 @@
 ///|
 /// Deterministic public statistics for one BDD Handle.
+#derive(Debug, Eq)
 pub(all) struct BddStatistics {
   declared_variables : Int32
   support_variables : Int32
   reachable_nodes : Int32
   retained_nodes : Int32
   model_count_decimal : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Manager::statistics(

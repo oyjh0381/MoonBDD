@@ -1,21 +1,24 @@
 ///|
 /// One complete assignment in the Manager's Variable Order.
+#derive(Debug, Eq)
 pub(all) struct Model {
   values : Array[(String, Bool)]
-} derive(Debug, Eq)
+}
 
 ///|
 /// Bounded Model enumeration result. `complete` is false when more Models exist.
+#derive(Debug, Eq)
 pub(all) struct ModelEnumeration {
   models : Array[Model]
   complete : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Eq, Hash)
 priv struct CountKey {
   root : Int32
   level : Int32
-} derive(Eq, Hash)
+}
 
 ///|
 /// Minimal exact non-negative integer used by Model Count. Digits are

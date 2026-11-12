@@ -1,15 +1,17 @@
 ///|
 /// One stable source-positioned expression diagnostic.
+#derive(Debug, Eq)
 pub(all) struct ParseDiagnostic {
   offset : Int32
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum ExpressionError {
   ParseFailure(ParseDiagnostic)
   CompileFailure(BddError)
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct ExpressionParser {

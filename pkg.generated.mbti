@@ -16,6 +16,7 @@ pub struct Bdd {
 }
 pub fn Bdd::same(Self, Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BddError {
   InvalidBudget(String, Int32)
   EmptyVariable
@@ -36,28 +37,30 @@ pub(all) enum BddError {
   InvalidArgument(String)
   InvalidArtifact(String)
   UnsupportedVersion(Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn BddError::equal(Self, Self) -> Bool
 pub fn BddError::not_equal(Self, Self) -> Bool
 pub fn BddError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct BddStatistics {
   declared_variables : Int32
   support_variables : Int32
   reachable_nodes : Int32
   retained_nodes : Int32
   model_count_decimal : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BddStatistics::equal(Self, Self) -> Bool
 pub fn BddStatistics::not_equal(Self, Self) -> Bool
 pub fn BddStatistics::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ConstraintError {
   EmptyConstraintName
   DuplicateConstraintName(String)
   ConstraintCompileFailure(String, ExpressionError)
   ConstraintAnalysisFailure(BddError)
-} derive(Eq, @debug.Debug)
+}
 pub fn ConstraintError::equal(Self, Self) -> Bool
 pub fn ConstraintError::not_equal(Self, Self) -> Bool
 pub fn ConstraintError::to_repr(Self) -> @debug.Repr
@@ -70,30 +73,34 @@ pub struct ConstraintReport {
   redundant : Array[String]
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Cube {
   values : Array[(String, Bool)]
-} derive(Eq, @debug.Debug)
+}
 pub fn Cube::equal(Self, Self) -> Bool
 pub fn Cube::not_equal(Self, Self) -> Bool
 pub fn Cube::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CubeEnumeration {
   cubes : Array[Cube]
   complete : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn CubeEnumeration::equal(Self, Self) -> Bool
 pub fn CubeEnumeration::not_equal(Self, Self) -> Bool
 pub fn CubeEnumeration::to_repr(Self) -> @debug.Repr
 
-type DecisionNode derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type DecisionNode
 pub fn DecisionNode::equal(Self, Self) -> Bool
 pub fn DecisionNode::not_equal(Self, Self) -> Bool
 pub fn DecisionNode::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ExpressionError {
   ParseFailure(ParseDiagnostic)
   CompileFailure(BddError)
-} derive(Eq, @debug.Debug)
+}
 pub fn ExpressionError::equal(Self, Self) -> Bool
 pub fn ExpressionError::not_equal(Self, Self) -> Bool
 pub fn ExpressionError::to_repr(Self) -> @debug.Repr
@@ -151,48 +158,54 @@ pub fn Manager::variable_count(Self) -> Int32
 pub fn Manager::variable_names(Self) -> Array[String]
 pub fn Manager::xor_bdd(Self, Bdd, Bdd) -> Result[Bdd, BddError]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Model {
   values : Array[(String, Bool)]
-} derive(Eq, @debug.Debug)
+}
 pub fn Model::equal(Self, Self) -> Bool
 pub fn Model::not_equal(Self, Self) -> Bool
 pub fn Model::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ModelEnumeration {
   models : Array[Model]
   complete : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn ModelEnumeration::equal(Self, Self) -> Bool
 pub fn ModelEnumeration::not_equal(Self, Self) -> Bool
 pub fn ModelEnumeration::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct NamedConstraint {
   name : String
   expression : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NamedConstraint::equal(Self, Self) -> Bool
 pub fn NamedConstraint::not_equal(Self, Self) -> Bool
 pub fn NamedConstraint::to_repr(Self) -> @debug.Repr
 
-type NodeKey derive(Eq, Hash)
+#derive(Eq, Hash)
+type NodeKey
 pub fn NodeKey::equal(Self, Self) -> Bool
 pub fn NodeKey::hash(Self) -> Int32
 pub fn NodeKey::hash_combine(Self, Hasher) -> Unit
 pub fn NodeKey::not_equal(Self, Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ParseDiagnostic {
   offset : Int32
   message : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ParseDiagnostic::equal(Self, Self) -> Bool
 pub fn ParseDiagnostic::not_equal(Self, Self) -> Bool
 pub fn ParseDiagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PartialValue {
   AlwaysFalse
   AlwaysTrue
   Undetermined
-} derive(Eq, @debug.Debug)
+}
 pub fn PartialValue::equal(Self, Self) -> Bool
 pub fn PartialValue::not_equal(Self, Self) -> Bool
 pub fn PartialValue::to_repr(Self) -> @debug.Repr
@@ -205,10 +218,11 @@ pub(all) struct ReachabilityResult {
   witness : Model?
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RelationCheck {
   holds : Bool
   witness : Model?
-} derive(Eq, @debug.Debug)
+}
 pub fn RelationCheck::equal(Self, Self) -> Bool
 pub fn RelationCheck::not_equal(Self, Self) -> Bool
 pub fn RelationCheck::to_repr(Self) -> @debug.Repr
@@ -221,6 +235,7 @@ pub(all) struct ReorderResult {
   attempted_orders : Int32
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ResourceBudget {
   max_nodes : Int32
   max_cache_entries : Int32
@@ -233,7 +248,7 @@ pub(all) struct ResourceBudget {
   max_output_bytes : Int32
   max_reorder_attempts : Int32
   max_iterations : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceBudget::default() -> Self
 pub fn ResourceBudget::equal(Self, Self) -> Bool
 pub fn ResourceBudget::not_equal(Self, Self) -> Bool
@@ -245,18 +260,20 @@ pub struct StateEncoding {
 pub fn StateEncoding::current_variables(Self) -> Array[String]
 pub fn StateEncoding::next_variables(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TruthRow {
   values : Array[(String, Bool)]
   result : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn TruthRow::equal(Self, Self) -> Bool
 pub fn TruthRow::not_equal(Self, Self) -> Bool
 pub fn TruthRow::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TruthTable {
   rows : Array[TruthRow]
   complete : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn TruthTable::equal(Self, Self) -> Bool
 pub fn TruthTable::not_equal(Self, Self) -> Bool
 pub fn TruthTable::to_repr(Self) -> @debug.Repr

@@ -39,8 +39,8 @@ canonically; it is not a workflow runtime or a general CTL/LTL model checker.
 
 After publication, install with `moon add oyjh0381/moonbdd`. From source:
 
-Requires `moonc >= 0.10.16` (validated with moon 0.1.20261016 and
-moonc 0.10.16+b1a0e846e), Python 3.10+ for verification tools, and a C toolchain
+Requires `moonc >= 0.10.20` (validated with moon 0.1.20261104 and
+moonc 0.10.20+65efd5b93), Python 3.10+ for verification tools, and a C toolchain
 for the Native CLI. The submission repository requires authorized GitHub access.
 
 ```sh

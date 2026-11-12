@@ -1,64 +1,72 @@
 ///|
 /// Result of evaluating a Boolean Function under a potentially incomplete
 /// assignment. `Undetermined` means both outcomes remain possible.
+#derive(Debug, Eq)
 pub(all) enum PartialValue {
   AlwaysFalse
   AlwaysTrue
   Undetermined
-} derive(Debug, Eq)
+}
 
 ///|
 /// One complete row in Manager Variable Order.
+#derive(Debug, Eq)
 pub(all) struct TruthRow {
   values : Array[(String, Bool)]
   result : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// Bounded deterministic Truth Table. `complete` is false when the caller's
 /// row limit stopped enumeration before all complete assignments were emitted.
+#derive(Debug, Eq)
 pub(all) struct TruthTable {
   rows : Array[TruthRow]
   complete : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// One partial assignment that guarantees the represented function is true.
 /// Variables absent from `values` are don't-care dimensions.
+#derive(Debug, Eq)
 pub(all) struct Cube {
   values : Array[(String, Bool)]
-} derive(Debug, Eq)
+}
 
 ///|
 /// Bounded deterministic enumeration of pairwise-disjoint satisfying Cubes.
+#derive(Debug, Eq)
 pub(all) struct CubeEnumeration {
   cubes : Array[Cube]
   complete : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// Outcome of a Boolean relation check. When `holds` is false, `witness`
 /// contains a complete assignment demonstrating the failure.
+#derive(Debug, Eq)
 pub(all) struct RelationCheck {
   holds : Bool
   witness : Model?
-} derive(Debug, Eq)
+}
 
 ///|
 /// One named Boolean expression in a Constraint Set.
+#derive(Debug, Eq)
 pub(all) struct NamedConstraint {
   name : String
   expression : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// Stable failures specific to compiling and diagnosing named Constraint Sets.
+#derive(Debug, Eq)
 pub(all) enum ConstraintError {
   EmptyConstraintName
   DuplicateConstraintName(String)
   ConstraintCompileFailure(String, ExpressionError)
   ConstraintAnalysisFailure(BddError)
-} derive(Debug, Eq)
+}
 
 ///|
 /// Deterministic Constraint Set diagnosis. Satisfiable sets provide a witness

@@ -1,6 +1,7 @@
 ///|
 /// Explicit limits for operations whose time or retained state can grow
 /// exponentially. Every value must be positive.
+#derive(Debug, Eq)
 pub(all) struct ResourceBudget {
   max_nodes : Int32
   max_cache_entries : Int32
@@ -13,7 +14,7 @@ pub(all) struct ResourceBudget {
   max_output_bytes : Int32
   max_reorder_attempts : Int32
   max_iterations : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResourceBudget::default() -> ResourceBudget {
@@ -35,6 +36,7 @@ pub fn ResourceBudget::default() -> ResourceBudget {
 ///|
 /// Stable public error categories. Errors never encode private node-table
 /// layout and are suitable for mapping to CLI exit categories.
+#derive(Debug, Eq)
 pub(all) enum BddError {
   InvalidBudget(String, Int32)
   EmptyVariable
@@ -55,7 +57,7 @@ pub(all) enum BddError {
   InvalidArgument(String)
   InvalidArtifact(String)
   UnsupportedVersion(Int32)
-} derive(Debug, Eq)
+}
 
 ///|
 /// A Manager-owned reference to one canonical Boolean Function.
@@ -65,25 +67,28 @@ pub struct Bdd {
 }
 
 ///|
+#derive(Debug, Eq)
 struct DecisionNode {
   variable : Int32
   low : Int32
   high : Int32
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Eq, Hash)
 struct NodeKey {
   variable : Int32
   low : Int32
   high : Int32
-} derive(Eq, Hash)
+}
 
 ///|
+#derive(Eq, Hash)
 priv struct IteKey {
   condition : Int32
   then_root : Int32
   else_root : Int32
-} derive(Eq, Hash)
+}
 
 ///|
 /// Owner of one Variable Order and one canonical ROBDD node universe.
